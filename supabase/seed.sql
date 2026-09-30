@@ -1,0 +1,4 @@
+-- Dados de exemplo para desenvolvimento local (supabase db reset).
+-- As categorias padrão já são criadas pelo gatilho on_auth_user_created.
+-- Crie seu usuário de teste pelo painel local (http://localhost:54323) e,
+-- se quiser, insira contas e transações de exemplo aqui usando o id dele.

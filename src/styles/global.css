@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Tokens do design aprovado (canvas de telas) */
+@theme {
+  --color-ground: #F4F5F1;
+  --color-surface: #FFFFFF;
+  --color-ink: #15201B;
+  --color-muted: #5B6660;
+  --color-line: #E3E6E0;
+  --color-line-strong: #D5D9D2;
+  --color-brand: #0E6B58;
+  --color-brand-dark: #0A5344;
+  --color-income: #0E6B58;
+  --color-expense: #B4410F;
+  --color-expense-soft: #FBEDE4;
+  --color-cat-food: #2F6FB0;
+  --color-cat-transport: #D07A2B;
+  --color-cat-leisure: #8A5CB8;
+  --color-cat-other: #9AA39E;
+
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-display: "Sora", "Manrope", system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Inputs com 16px evitam o zoom automático do Safari no iPhone */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Áreas seguras do iPhone (notch e barra inferior) */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
