@@ -35,14 +35,14 @@ Principais regras de negócio:
 - RN-05: transações importadas do banco: só categoria e descrição são editáveis
 - RN-08: período padrão dos relatórios é o mês civil
 
-## Situação (01/10/2026)
+## Situação (30/09/2026)
 Feito: auth (cadastro, login, recuperar/alterar senha), contas, categorias, transações
 (filtros, parcelado, recorrente, transferência), contas do mês (pagar/desmarcar via RPC
-/), início, relatórios (por categoria, 6 meses, CSV).
-Regras no banco:  (view ,
+`pay_bill`/`unpay_bill`), início, relatórios (por categoria, 6 meses, CSV).
+Regras no banco: `supabase/migrations/20261001000000_app_logic.sql` (view `account_balances`,
 RN-03, RN-05 por trigger).
 
 ## Próximos passos
-1. Integração Open Finance (Edge Function ) — falta escolher o agregador
+1. Integração Open Finance (Edge Function `openfinance-sync`) — falta escolher o agregador
 2. Publicar (Cloudflare Pages) e ajustar Site URL / Redirect URLs no Supabase Auth
 3. Notificações push de vencimento (hoje o lembrete RF-20 aparece dentro do app)
