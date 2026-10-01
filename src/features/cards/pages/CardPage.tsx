@@ -7,9 +7,9 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { formatDate, formatDayMonth, formatMonthShort, formatMonthYear, parseISODate, toISODate } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { InvoiceBadge, PayInvoiceForm, describeInvoiceDue, invoiceAmount, invoiceTitle } from '../components/InvoiceParts';
-import { useCards, type CardWithInvoices } from '../hooks/useCards';
+import { isConfiguredCard, useCards, type CardWithInvoices } from '../hooks/useCards';
 import { ongoingInstallments, parseInstallment } from '../installments';
-import type { Invoice } from '../invoices';
+import { describeCycle, type Invoice } from '../invoices';
 
 /** Aba Cartão: abre o primeiro cartão ativo. */
 export function CardsPage() {
@@ -71,7 +71,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
     </nav>
   );
 
-  if (!invoices) {
+  if (!invoices || !isConfiguredCard(card)) {
     return (
       <>
         <PageHeader title={card.name} action={editLink} />
@@ -86,6 +86,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
     );
   }
 
+  const cycle = describeCycle(card);
   const debt = Math.max(-card.current_balance_cents, 0);
   const limit = card.credit_limit_cents;
   const available = limit !== null ? limit - debt : null;
@@ -117,9 +118,9 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
             <p className="font-display text-3xl font-semibold break-words">{formatCents(available ?? debt)}</p>
           </div>
           <p className="shrink-0 text-right text-sm opacity-80">
-            Fecha dia {card.closing_day}
+            {cycle.closing}
             <br />
-            Vence dia {card.due_day}
+            {cycle.due}
           </p>
         </div>
         {limit !== null ? (
@@ -236,7 +237,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
       </div>
 
       <p className="text-sm text-muted">
-        Compras feitas a partir do dia {card.closing_day} entram na fatura seguinte. Para lançar uma compra, use “Nova transação” escolhendo este cartão em
+        {card.closing_day === 31 ? 'Compras feitas no último dia do mês' : `Compras feitas a partir do dia ${card.closing_day}`} entram na fatura seguinte. Vencimento em fim de semana ou feriado nacional passa para o próximo dia útil. Para lançar uma compra, use “Nova transação” escolhendo este cartão em
         “Pago com”.
       </p>
     </>

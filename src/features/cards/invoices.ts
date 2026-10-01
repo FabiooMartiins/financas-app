@@ -1,13 +1,21 @@
 // Faturas do cartão de crédito, calculadas a partir das transações (RN-02):
 // - compra entra na fatura pelo dia da compra; a partir do dia do fechamento vai para a seguinte;
 // - pagamento de fatura é transferência para o cartão e abate primeiro a fatura mais antiga.
+import { nextBusinessDay } from '@/lib/businessDays';
 import { daysInMonth, parseISODate, toISODate } from '@/lib/dates';
 
-export interface CardSettings {
+/** Ciclo da fatura. closing_day 31 = último dia do mês (meses curtos usam o último dia). */
+export interface CardCycle {
+  closing_day: number;
+  /** Vencimento em dia fixo do mês... */
+  due_day: number | null;
+  /** ...ou N dias depois do fechamento (tem prioridade sobre due_day) */
+  due_days_after_closing: number | null;
+}
+
+export interface CardSettings extends CardCycle {
   id: string;
   name: string;
-  closing_day: number;
-  due_day: number;
   credit_limit_cents: number | null;
   /** Saldo inicial: negativo = fatura que já estava em aberto no cadastro */
   balance_cents: number;
@@ -61,9 +69,33 @@ export function closingDate(card: Pick<CardSettings, 'closing_day'>, year: numbe
   return dateIn(year, month, card.closing_day);
 }
 
-/** Vencimento: no mesmo mês do fechamento, ou no seguinte se o dia for menor ou igual ao fechamento. */
-export function dueDate(card: Pick<CardSettings, 'closing_day' | 'due_day'>, year: number, month: number): string {
-  return card.due_day > card.closing_day ? dateIn(year, month, card.due_day) : dateIn(year, month + 1, card.due_day);
+/**
+ * Vencimento da fatura que fecha no mês (year, month):
+ * - N dias depois do fechamento; ou
+ * - dia fixo: no mesmo mês do fechamento, ou no seguinte se o dia for menor ou igual ao fechamento.
+ * Caindo em sábado, domingo ou feriado nacional, passa para o próximo dia útil.
+ */
+export function dueDate(card: CardCycle, year: number, month: number): string {
+  let due: string;
+  if (card.due_days_after_closing) {
+    const date = parseISODate(closingDate(card, year, month));
+    date.setDate(date.getDate() + card.due_days_after_closing);
+    due = toISODate(date);
+  } else {
+    const day = card.due_day ?? card.closing_day;
+    due = day > card.closing_day ? dateIn(year, month, day) : dateIn(year, month + 1, day);
+  }
+  return nextBusinessDay(due);
+}
+
+/** "Fecha no último dia" / "Fecha dia 5" e "Vence 7 dias depois" / "Vence dia 12" */
+export function describeCycle(card: CardCycle): { closing: string; due: string } {
+  return {
+    closing: card.closing_day === 31 ? 'Fecha no último dia' : `Fecha dia ${card.closing_day}`,
+    due: card.due_days_after_closing
+      ? `Vence ${card.due_days_after_closing} ${card.due_days_after_closing === 1 ? 'dia' : 'dias'} depois`
+      : `Vence dia ${card.due_day}`,
+  };
 }
 
 /** Mês (ano, mês) do fechamento da fatura em que cai uma compra feita em `isoDate`. */

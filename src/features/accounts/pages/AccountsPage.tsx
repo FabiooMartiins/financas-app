@@ -6,6 +6,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useBillOccurrences } from '@/features/bills/hooks/useBills';
+import { isConfiguredCard } from '@/features/cards/hooks/useCards';
+import { describeCycle } from '@/features/cards/invoices';
 import { startOfMonth } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { accountTypeLabels, type Account } from '../api';
@@ -90,7 +92,7 @@ function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Ma
             <p className="text-sm text-muted">
               {accountTypeLabels[account.type]}
               {account.fromBank && ` · ${account.institution ?? 'Banco'}`}
-              {account.type === 'credit_card' && (account.due_day ? ` · vence dia ${account.due_day}` : ' · configurar fatura')}
+              {account.type === 'credit_card' && (isConfiguredCard(account) ? ` · ${cycleLabel(account)}` : ' · configurar fatura')}
             </p>
           </div>
           <div className="shrink-0 text-right">
@@ -117,4 +119,10 @@ function MenuLink({ to, label, hint }: { to: string; label: string; hint: string
       </svg>
     </Link>
   );
+}
+
+/** "fecha no último dia, vence 7 dias depois" */
+function cycleLabel(card: Account & { closing_day: number }) {
+  const { closing, due } = describeCycle(card);
+  return `${closing.toLowerCase()}, ${due.toLowerCase()}`;
 }

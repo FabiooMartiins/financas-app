@@ -8,8 +8,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
+import type { Account } from '@/features/accounts/api';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import { createBill, payBill } from '@/features/bills/api';
+import { isConfiguredCard } from '@/features/cards/hooks/useCards';
 import { dueDate as invoiceDueDate, invoiceMonthFor } from '@/features/cards/invoices';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import { formatDate, parseISODate, startOfMonth, today } from '@/lib/dates';
@@ -320,12 +322,12 @@ function CardInvoiceHint({
   date,
   type,
 }: {
-  account?: { type: string; closing_day: number | null; due_day: number | null };
+  account?: Account;
   date: string;
   type: TransactionType;
 }) {
-  if (type !== 'expense' || !date || account?.type !== 'credit_card' || !account.closing_day || !account.due_day) return null;
-  const card = { closing_day: account.closing_day, due_day: account.due_day };
+  if (type !== 'expense' || !date || !account || !isConfiguredCard(account)) return null;
+  const card = account;
   const { year, month } = invoiceMonthFor(card, date);
   return <p className="-mt-2 text-sm text-muted">Entra na fatura que vence em {formatDate(invoiceDueDate(card, year, month))}.</p>;
 }

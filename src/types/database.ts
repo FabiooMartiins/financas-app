@@ -7,13 +7,13 @@ export type Database = {
           Tables: {
             "accounts": {
                   Row: {
-                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"external_id": string | null,"id": string,"is_active": boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string
+                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"due_days_after_closing": number | null,"external_id": string | null,"id": string,"is_active": boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string
                   }
                   Insert: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string
                   }
                   Update: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string
                   }
                   Relationships: [
                     {
