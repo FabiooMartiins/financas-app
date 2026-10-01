@@ -98,7 +98,7 @@ function PayForm({ occurrence: o, onDone }: { occurrence: BillOccurrence; onDone
 
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-ground p-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Select label={isIncome ? 'Recebido em' : 'Pago com'} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
           {usable.map((a) => (
             <option key={a.id} value={a.id}>

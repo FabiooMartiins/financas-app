@@ -56,7 +56,7 @@ export function ReportsPage() {
       )}
 
       {movements.data && (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <Card className="flex flex-col gap-4 p-5">
             <h2 className="font-display font-semibold">Por categoria</h2>
             <SegmentedControl

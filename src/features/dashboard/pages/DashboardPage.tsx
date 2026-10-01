@@ -102,25 +102,25 @@ export function DashboardPage() {
       )}
 
       {/* Celular: empilhado. PC: saldo à esquerda, receitas/despesas à direita. */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Link to="/contas" className="rounded-2xl bg-brand p-5 text-white lg:col-span-1">
           <p className="text-sm font-semibold opacity-90">Saldo total</p>
-          <p className="font-display text-3xl font-semibold">{totalBalance !== undefined ? formatCents(totalBalance) : '—'}</p>
+          <p className="font-display text-3xl font-semibold break-words">{totalBalance !== undefined ? formatCents(totalBalance) : '—'}</p>
         </Link>
         <div className="grid grid-cols-2 gap-3 lg:col-span-2">
-          <Card className="p-4">
+          <Card className="min-w-0 p-4">
             <p className="text-sm text-muted">Receitas do mês</p>
-            <p className="font-display text-lg font-semibold text-income">{totals ? formatCents(totals.income) : '—'}</p>
+            <p className="font-display text-base font-semibold break-words text-income sm:text-lg">{totals ? formatCents(totals.income) : '—'}</p>
           </Card>
-          <Card className="p-4">
+          <Card className="min-w-0 p-4">
             <p className="text-sm text-muted">Despesas do mês</p>
-            <p className="font-display text-lg font-semibold text-expense">{totals ? formatCents(totals.expense) : '—'}</p>
+            <p className="font-display text-base font-semibold break-words text-expense sm:text-lg">{totals ? formatCents(totals.expense) : '—'}</p>
           </Card>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <section className="flex min-w-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">Próximos vencimentos</h2>
             <Link to="/vencimentos" className="flex min-h-11 items-center text-sm font-semibold text-brand">
@@ -139,7 +139,7 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section className="flex min-w-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">
               A receber{receivables.length > 0 && <span className="font-normal text-income"> · {formatCents(receivableTotal)}</span>}
@@ -165,7 +165,7 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section className="flex min-w-0 flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">Últimas transações</h2>
             <Link to="/transacoes" className="flex min-h-11 items-center text-sm font-semibold text-brand">

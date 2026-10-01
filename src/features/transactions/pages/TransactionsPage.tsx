@@ -68,7 +68,7 @@ export function TransactionsPage() {
       </div>
 
       {showFilters && (
-        <Card className="grid gap-3 p-4 sm:grid-cols-3">
+        <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
           <Select label="Tipo" value={type} onChange={(e) => setType(e.target.value as TransactionType | '')}>
             <option value="">Todos</option>
             <option value="expense">Despesas</option>
