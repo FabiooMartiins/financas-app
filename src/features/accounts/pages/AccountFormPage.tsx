@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ConfirmButton } from '@/components/ui/ConfirmButton';
 import { Input } from '@/components/ui/Input';
@@ -28,7 +28,8 @@ function AccountForm({ account }: { account?: Account }) {
   const remove = useDeleteAccount();
 
   const [name, setName] = useState(account?.name ?? '');
-  const [type, setType] = useState<AccountType>(account?.type ?? 'checking');
+  const [params] = useSearchParams();
+  const [type, setType] = useState<AccountType>(account?.type ?? (params.get('tipo') === 'cartao' ? 'credit_card' : 'checking'));
   const isCard = type === 'credit_card';
   // Cartão: o usuário informa a fatura em aberto (positivo) e guardamos como saldo negativo
   const [amount, setAmount] = useState(() => {

@@ -45,7 +45,7 @@ export function describeInvoiceDue(invoice: Invoice): string {
 /** Linha compacta (Contas do mês e Início) que leva para a tela do cartão. */
 export function InvoiceSummaryItem({ invoice }: { invoice: Invoice }) {
   return (
-    <Link to={`/cartoes/${invoice.cardId}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
+    <Link to={`/cartoes/${invoice.cardId}?fatura=${invoice.key}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-white" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <rect x="3" y="6" width="18" height="13" rx="2" />
