@@ -18,10 +18,11 @@ const badge: Record<BillStatus, string> = {
   upcoming: 'bg-ground text-muted',
 };
 
-/** Uma conta no mês, com marcar/desmarcar como paga (RF-18, RN-03). */
+/** Uma conta (a pagar ou a receber) no mês, com marcar/desmarcar (RF-18, RN-03). */
 export function BillOccurrenceItem({ occurrence: o, showMonth }: { occurrence: BillOccurrence; showMonth?: boolean }) {
   const [paying, setPaying] = useState(false);
   const unpay = useUnpayBill();
+  const isIncome = o.bill.kind === 'income';
 
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
@@ -38,12 +39,16 @@ export function BillOccurrenceItem({ occurrence: o, showMonth }: { occurrence: B
           </p>
           <p className="truncate text-sm text-muted">
             {showMonth ? formatDate(o.dueDate) : `Dia ${formatDayMonth(o.dueDate)}`}
-            {o.payment?.transaction && ` · paga em ${formatDayMonth(o.payment.transaction.occurred_on)}`}
+            {o.payment?.transaction && ` · ${isIncome ? 'recebido' : 'paga'} em ${formatDayMonth(o.payment.transaction.occurred_on)}`}
             {o.payment?.transaction?.account && ` (${o.payment.transaction.account.name})`}
+            {isIncome && !o.payment && o.bill.account && ` · em ${o.bill.account.name}`}
           </p>
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <p className="font-display font-semibold">{formatCents(o.bill.amount_cents)}</p>
+          <p className={`font-display font-semibold ${isIncome ? 'text-income' : ''}`}>
+            {isIncome && '+ '}
+            {formatCents(o.bill.amount_cents)}
+          </p>
           <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${badge[o.status]}`}>{describeDue(o)}</span>
         </div>
       </div>
@@ -57,14 +62,14 @@ export function BillOccurrenceItem({ occurrence: o, showMonth }: { occurrence: B
             disabled={unpay.isPending}
             onConfirm={() => unpay.mutate({ billId: o.bill.id, month: o.month })}
           >
-            Desmarcar pagamento
+            {isIncome ? 'Desmarcar recebimento' : 'Desmarcar pagamento'}
           </ConfirmButton>
         </>
       ) : paying ? (
         <PayForm occurrence={o} onDone={() => setPaying(false)} />
       ) : (
         <Button variant={o.status === 'overdue' ? 'primary' : 'secondary'} className="h-11 text-sm" onClick={() => setPaying(true)}>
-          Marcar como paga
+          {isIncome ? 'Marcar como recebido' : 'Marcar como paga'}
         </Button>
       )}
     </div>
@@ -74,7 +79,9 @@ export function BillOccurrenceItem({ occurrence: o, showMonth }: { occurrence: B
 function PayForm({ occurrence: o, onDone }: { occurrence: BillOccurrence; onDone: () => void }) {
   const { data: accounts } = useAccounts();
   const pay = usePayBill();
-  const usable = accounts?.filter((a) => a.is_active) ?? [];
+  const isIncome = o.bill.kind === 'income';
+  // Recebimento cai numa conta de verdade, não no cartão
+  const usable = accounts?.filter((a) => a.is_active && (!isIncome || a.type !== 'credit_card')) ?? [];
   const [chosenAccountId, setAccountId] = useState('');
   const accountId = chosenAccountId || o.bill.account_id || usable[0]?.id || '';
   // Mês passado ou futuro: sugere a data de vencimento; mês atual: hoje
@@ -84,7 +91,7 @@ function PayForm({ occurrence: o, onDone }: { occurrence: BillOccurrence; onDone
   if (accounts && usable.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Cadastre uma conta em <Link to="/contas/nova" className="font-semibold text-brand underline">Contas</Link> para registrar o pagamento.
+        Cadastre uma conta em <Link to="/contas/nova" className="font-semibold text-brand underline">Contas</Link> para registrar.
       </p>
     );
   }
@@ -92,14 +99,14 @@ function PayForm({ occurrence: o, onDone }: { occurrence: BillOccurrence; onDone
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-ground p-3">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Select label="Pago com" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+        <Select label={isIncome ? 'Recebido em' : 'Pago com'} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
           {usable.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
           ))}
         </Select>
-        <Input label="Data do pagamento" type="date" required value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
+        <Input label={isIncome ? 'Data do recebimento' : 'Data do pagamento'} type="date" required value={paidOn} onChange={(e) => setPaidOn(e.target.value)} />
       </div>
       {pay.error && <ErrorState error={pay.error} />}
       <div className="flex gap-2">
@@ -111,7 +118,7 @@ function PayForm({ occurrence: o, onDone }: { occurrence: BillOccurrence; onDone
           disabled={!accountId || !paidOn || pay.isPending}
           onClick={() => pay.mutate({ billId: o.bill.id, month: o.month, accountId, paidOn }, { onSuccess: onDone })}
         >
-          {pay.isPending ? 'Salvando…' : 'Confirmar pagamento'}
+          {pay.isPending ? 'Salvando…' : isIncome ? 'Confirmar recebimento' : 'Confirmar pagamento'}
         </Button>
       </div>
     </div>

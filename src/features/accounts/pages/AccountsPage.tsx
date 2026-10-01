@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useBillOccurrences } from '@/features/bills/hooks/useBills';
+import { startOfMonth } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { accountTypeLabels, type Account } from '../api';
 import { useAccounts } from '../hooks/useAccounts';
@@ -12,6 +15,14 @@ import { useAccounts } from '../hooks/useAccounts';
 export function AccountsPage() {
   const { session, signOut } = useAuth();
   const { data: accounts, isPending, error } = useAccounts();
+  const [month] = useState(() => startOfMonth(new Date()));
+  const occurrences = useBillOccurrences(month);
+  // Quanto ainda vai entrar em cada conta neste mês (recebimentos previstos)
+  const incoming = new Map<string, number>();
+  for (const o of occurrences.data ?? []) {
+    if (o.bill.kind !== 'income' || o.status === 'paid' || !o.bill.account_id) continue;
+    incoming.set(o.bill.account_id, (incoming.get(o.bill.account_id) ?? 0) + o.bill.amount_cents);
+  }
 
   const active = accounts?.filter((a) => a.is_active) ?? [];
   const inactive = accounts?.filter((a) => !a.is_active) ?? [];
@@ -42,11 +53,11 @@ export function AccountsPage() {
         </EmptyState>
       )}
 
-      {active.length > 0 && <AccountList accounts={active} />}
+      {active.length > 0 && <AccountList accounts={active} incoming={incoming} />}
       {inactive.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-bold text-muted">Desativadas</h2>
-          <AccountList accounts={inactive} />
+          <AccountList accounts={inactive} incoming={incoming} />
         </section>
       )}
 
@@ -65,7 +76,7 @@ export function AccountsPage() {
   );
 }
 
-function AccountList({ accounts }: { accounts: Account[] }) {
+function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Map<string, number> }) {
   return (
     <Card className="divide-y divide-line">
       {accounts.map((account) => (
@@ -82,9 +93,12 @@ function AccountList({ accounts }: { accounts: Account[] }) {
               {account.type === 'credit_card' && (account.due_day ? ` · vence dia ${account.due_day}` : ' · configurar fatura')}
             </p>
           </div>
-          <p className={`shrink-0 font-display font-semibold ${account.current_balance_cents < 0 ? 'text-expense' : ''}`}>
-            {formatCents(account.current_balance_cents)}
-          </p>
+          <div className="shrink-0 text-right">
+            <p className={`font-display font-semibold ${account.current_balance_cents < 0 ? 'text-expense' : ''}`}>
+              {formatCents(account.current_balance_cents)}
+            </p>
+            {incoming.has(account.id) && <p className="text-sm text-income">+ {formatCents(incoming.get(account.id)!)} a receber</p>}
+          </div>
         </Link>
       ))}
     </Card>

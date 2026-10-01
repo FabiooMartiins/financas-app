@@ -3,9 +3,12 @@ import { toISODate } from '@/lib/dates';
 import type { Database } from '@/types/database';
 
 export type BillFrequency = Database['public']['Enums']['bill_frequency'];
+/** expense = conta a pagar; income = recebimento previsto */
+export type BillKind = Database['public']['Enums']['category_kind'];
 
 export interface Bill {
   id: string;
+  kind: BillKind;
   name: string;
   amount_cents: number;
   due_day: number;
@@ -35,7 +38,7 @@ export async function listBills(): Promise<Bill[]> {
   const { data, error } = await supabase
     .from('bills')
     .select(
-      'id, name, amount_cents, due_day, frequency, category_id, account_id, remind_days_before, installments_total, starts_on, is_active, ' +
+      'id, kind, name, amount_cents, due_day, frequency, category_id, account_id, remind_days_before, installments_total, starts_on, is_active, ' +
         'category:categories(id, name, color), account:accounts(id, name)',
     )
     .order('due_day');
@@ -71,7 +74,7 @@ export async function deleteBill(id: string) {
   if (error) throw error;
 }
 
-// RF-18, RN-03: gera a transação de despesa e registra o pagamento (atômico, no banco)
+// RF-18, RN-03: gera a transação (despesa ou receita, conforme o tipo) e registra o pagamento (atômico, no banco)
 export async function payBill(billId: string, referenceMonth: Date, accountId: string, paidOn: string) {
   const { error } = await supabase.rpc('pay_bill', {
     p_bill_id: billId,

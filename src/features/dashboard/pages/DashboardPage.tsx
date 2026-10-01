@@ -33,7 +33,11 @@ export function DashboardPage() {
   const totalBalance = accounts.data?.filter((a) => a.is_active).reduce((s, a) => s + a.current_balance_cents, 0);
   const totals = movements.data ? totalsByMonth(movements.data, month, 1)[0] : undefined;
 
-  const pending = bills.data?.filter((o) => o.status !== 'paid' && (o.status === 'overdue' || o.month.getTime() === month.getTime())) ?? [];
+  const notDone = bills.data?.filter((o) => o.status !== 'paid' && (o.status === 'overdue' || o.month.getTime() === month.getTime())) ?? [];
+  const pending = notDone.filter((o) => o.bill.kind === 'expense');
+  // Recebimentos previstos (atrasados ou deste mês)
+  const receivables = notDone.filter((o) => o.bill.kind === 'income');
+  const receivableTotal = receivables.reduce((sum, o) => sum + o.bill.amount_cents, 0);
   const todayIso = today();
   const monthEnd = monthRange(month).end;
   // Faturas: fechadas/vencidas com saldo, ou que vencem até o fim do mês (RN-02)
@@ -130,6 +134,32 @@ export function DashboardPage() {
             <Card className="divide-y divide-line">
               {upcoming.map((item) => (
                 <div key={item.key}>{item.node}</div>
+              ))}
+            </Card>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display font-semibold">
+              A receber{receivables.length > 0 && <span className="font-normal text-income"> · {formatCents(receivableTotal)}</span>}
+            </h2>
+            <Link to="/vencimentos?aba=receber" className="flex min-h-11 items-center text-sm font-semibold text-brand">
+              Ver todos
+            </Link>
+          </div>
+          {bills.data && receivables.length === 0 && (
+            <EmptyState>
+              Nenhum recebimento previsto neste mês.{' '}
+              <Link to="/vencimentos/nova?tipo=receber" className="font-semibold text-brand underline">
+                Cadastrar recebimento
+              </Link>
+            </EmptyState>
+          )}
+          {receivables.length > 0 && (
+            <Card className="divide-y divide-line">
+              {receivables.slice(0, 4).map((o) => (
+                <BillOccurrenceItem key={`${o.bill.id}-${o.dueDate}`} occurrence={o} showMonth />
               ))}
             </Card>
           )}

@@ -10,7 +10,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-dvh">
       <Sidebar />
-      <main className="pt-safe flex-1 pb-28 lg:pb-10">
+      <main className="pt-safe min-w-0 flex-1 pb-28 lg:pb-10">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-5 py-8 lg:px-10">
           <Outlet />
         </div>

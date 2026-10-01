@@ -64,13 +64,13 @@ isOneToOne: false
                   ]
                 },"bills": {
                   Row: {
-                    "account_id": string | null,"amount_cents": number,"category_id": string | null,"created_at": string,"due_day": number,"frequency": Database["public"]['Enums']["bill_frequency"],"id": string,"installments_total": number | null,"is_active": boolean,"name": string,"remind_days_before": number,"starts_on": string,"user_id": string
+                    "account_id": string | null,"amount_cents": number,"category_id": string | null,"created_at": string,"due_day": number,"frequency": Database["public"]['Enums']["bill_frequency"],"id": string,"installments_total": number | null,"is_active": boolean,"kind": Database["public"]['Enums']["category_kind"],"name": string,"remind_days_before": number,"starts_on": string,"user_id": string
                   }
                   Insert: {
-                    "account_id"?: string | null,"amount_cents": number,"category_id"?: string | null,"created_at"?: string,"due_day": number,"frequency"?: Database["public"]['Enums']["bill_frequency"],"id"?: string,"installments_total"?: number | null,"is_active"?: boolean,"name": string,"remind_days_before"?: number,"starts_on"?: string,"user_id"?: string
+                    "account_id"?: string | null,"amount_cents": number,"category_id"?: string | null,"created_at"?: string,"due_day": number,"frequency"?: Database["public"]['Enums']["bill_frequency"],"id"?: string,"installments_total"?: number | null,"is_active"?: boolean,"kind"?: Database["public"]['Enums']["category_kind"],"name": string,"remind_days_before"?: number,"starts_on"?: string,"user_id"?: string
                   }
                   Update: {
-                    "account_id"?: string | null,"amount_cents"?: number,"category_id"?: string | null,"created_at"?: string,"due_day"?: number,"frequency"?: Database["public"]['Enums']["bill_frequency"],"id"?: string,"installments_total"?: number | null,"is_active"?: boolean,"name"?: string,"remind_days_before"?: number,"starts_on"?: string,"user_id"?: string
+                    "account_id"?: string | null,"amount_cents"?: number,"category_id"?: string | null,"created_at"?: string,"due_day"?: number,"frequency"?: Database["public"]['Enums']["bill_frequency"],"id"?: string,"installments_total"?: number | null,"is_active"?: boolean,"kind"?: Database["public"]['Enums']["category_kind"],"name"?: string,"remind_days_before"?: number,"starts_on"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -182,7 +182,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_type": "checking"|"savings"|"credit_card"|"wallet","bill_frequency": "monthly"|"yearly","category_kind": "income"|"expense","transaction_source": "manual"|"bank","transaction_type": "income"|"expense"|"transfer"
+            "account_type": "checking"|"savings"|"credit_card"|"wallet","bill_frequency": "monthly"|"yearly"|"once","category_kind": "income"|"expense","transaction_source": "manual"|"bank","transaction_type": "income"|"expense"|"transfer"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -298,7 +298,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["checking", "savings", "credit_card", "wallet"],"bill_frequency": ["monthly", "yearly"],"category_kind": ["income", "expense"],"transaction_source": ["manual", "bank"],"transaction_type": ["income", "expense", "transfer"]
+            "account_type": ["checking", "savings", "credit_card", "wallet"],"bill_frequency": ["monthly", "yearly", "once"],"category_kind": ["income", "expense"],"transaction_source": ["manual", "bank"],"transaction_type": ["income", "expense", "transfer"]
           }
         }
 } as const

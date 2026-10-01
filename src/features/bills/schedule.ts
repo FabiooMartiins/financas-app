@@ -1,4 +1,4 @@
-// Em quais meses cada conta aparece, quando vence e qual a situação — RF-17 a RF-21, RN-04.
+// Em quais meses cada conta (a pagar ou a receber) aparece, quando vence e qual a situação — RF-17 a RF-21, RN-04.
 import { daysBetween, daysInMonth, parseISODate, toISODate, today } from '@/lib/dates';
 import type { Bill, BillPayment } from './api';
 
@@ -26,6 +26,7 @@ function occurrenceNumber(bill: Bill, month: Date): number | null {
   const start = parseISODate(bill.starts_on);
   const diff = monthIndex(month) - monthIndex(start);
   if (diff < 0) return null;
+  if (bill.frequency === 'once') return diff === 0 ? 1 : null;
   if (bill.frequency === 'yearly') {
     if (diff % 12 !== 0) return null;
     return diff / 12 + 1;
@@ -73,6 +74,14 @@ export function occurrencesForMonth(bills: Bill[], payments: BillPayment[], mont
 }
 
 export function describeDue(o: BillOccurrence): string {
+  if (o.bill.kind === 'income') {
+    if (o.status === 'paid') return 'Recebido';
+    if (o.daysLeft < -1) return `Atrasado há ${-o.daysLeft} dias`;
+    if (o.daysLeft === -1) return 'Era para ontem';
+    if (o.daysLeft === 0) return 'Previsto para hoje';
+    if (o.daysLeft === 1) return 'Amanhã';
+    return `Em ${o.daysLeft} dias`;
+  }
   if (o.status === 'paid') return 'Paga';
   if (o.daysLeft < -1) return `Venceu há ${-o.daysLeft} dias`;
   if (o.daysLeft === -1) return 'Venceu ontem';

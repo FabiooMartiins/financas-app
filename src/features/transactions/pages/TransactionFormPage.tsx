@@ -39,9 +39,10 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   const update = useUpdateTransaction();
   const remove = useDeleteTransaction();
   const createRecurring = useMutation({
-    // "Todo mês": cria a conta mensal e já marca este mês como pago (gera a transação)
+    // "Todo mês": cria a conta mensal (a pagar ou a receber) e já marca este mês como pago/recebido
     mutationFn: async (input: TransactionInput) => {
       const billId = await createBill({
+        kind: input.type === 'income' ? 'income' : 'expense',
         name: input.description,
         amount_cents: input.amount_cents,
         due_day: parseISODate(input.occurred_on).getDate(),
@@ -101,7 +102,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   function changeType(next: TransactionType) {
     setType(next);
     setCategoryId('');
-    if (next !== 'expense') setRepeat('once');
+    if (next === 'transfer' || (next === 'income' && repeat === 'installments')) setRepeat('once');
   }
 
   function handleSubmit(event: FormEvent) {
@@ -224,7 +225,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
           </p>
         )}
 
-        {!isEdit && type === 'expense' && (
+        {!isEdit && type !== 'transfer' && (
           <div className="flex flex-col gap-3">
             <SegmentedControl
               label="Repetição"
@@ -232,7 +233,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
               onChange={setRepeat}
               options={[
                 { value: 'once', label: 'Única' },
-                { value: 'installments', label: 'Parcelada' },
+                ...(type === 'expense' ? [{ value: 'installments' as const, label: 'Parcelada' }] : []),
                 { value: 'monthly', label: 'Todo mês' },
               ]}
             />
@@ -257,8 +258,9 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
             )}
             {repeat === 'monthly' && (
               <p className="text-sm text-muted">
-                Cria uma conta mensal com vencimento todo dia {parseISODate(date).getDate()} e marca este mês como pago. Os próximos meses aparecem em
-                Contas do mês.
+                {type === 'income'
+                  ? `Cria um recebimento mensal todo dia ${parseISODate(date).getDate()} nesta conta e marca este mês como recebido. Os próximos aparecem em Contas do mês, aba A receber.`
+                  : `Cria uma conta mensal com vencimento todo dia ${parseISODate(date).getDate()} e marca este mês como pago. Os próximos meses aparecem em Contas do mês.`}
               </p>
             )}
           </div>
