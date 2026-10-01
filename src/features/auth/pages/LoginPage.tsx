@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'reset';
 
-// RF-01, RF-02 (recuperação de senha: a implementar)
+// RF-01 (entrar/cadastrar), RF-02 (recuperação de senha)
 export function LoginPage() {
-  const { session, signIn, signUp } = useAuth();
+  const { session, signIn, signUp, sendPasswordReset } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -20,9 +20,10 @@ export function LoginPage() {
   if (session) return <Navigate to="/" replace />;
 
   const isSignUp = mode === 'signup';
+  const isReset = mode === 'reset';
 
-  function switchMode() {
-    setMode(isSignUp ? 'signin' : 'signup');
+  function switchMode(next: Mode) {
+    setMode(next);
     setError(null);
     setNotice(null);
   }
@@ -32,6 +33,17 @@ export function LoginPage() {
     setError(null);
     setNotice(null);
     setSubmitting(true);
+
+    if (isReset) {
+      const message = await sendPasswordReset(email);
+      setSubmitting(false);
+      if (message) setError(message);
+      else {
+        setNotice(`Se houver uma conta para ${email}, enviamos um link para criar uma nova senha.`);
+        setMode('signin');
+      }
+      return;
+    }
 
     if (isSignUp) {
       const result = await signUp(email, password);
@@ -59,10 +71,12 @@ export function LoginPage() {
           </div>
           <div className="flex flex-col gap-2">
             <h1 className="font-display text-3xl leading-tight font-semibold">
-              {isSignUp ? 'Crie sua conta' : 'Suas finanças em um só lugar'}
+              {isReset ? 'Recuperar senha' : isSignUp ? 'Crie sua conta' : 'Suas finanças em um só lugar'}
             </h1>
             <p className="text-muted">
-              {isSignUp
+              {isReset
+                ? 'Informe seu e-mail para receber um link de nova senha.'
+                : isSignUp
                 ? 'Use seu e-mail e uma senha com pelo menos 6 caracteres.'
                 : 'Entre para ver seus saldos, contas do mês e relatórios.'}
             </p>
@@ -71,26 +85,39 @@ export function LoginPage() {
 
         <div className="flex flex-col gap-4">
           <Input label="E-mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input
-            label="Senha"
-            type="password"
-            autoComplete={isSignUp ? 'new-password' : 'current-password'}
-            minLength={isSignUp ? 6 : undefined}
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          {!isReset && (
+            <Input
+              label="Senha"
+              type="password"
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              minLength={isSignUp ? 6 : undefined}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
           {error && <p role="alert" className="text-sm font-semibold text-expense">{error}</p>}
           {notice && <p role="status" className="text-sm font-semibold text-brand">{notice}</p>}
         </div>
 
         <div className="flex flex-col gap-3">
           <Button type="submit" disabled={submitting}>
-            {submitting ? (isSignUp ? 'Criando conta…' : 'Entrando…') : isSignUp ? 'Criar conta' : 'Entrar'}
+            {submitting
+              ? 'Aguarde…'
+              : isReset
+                ? 'Enviar link'
+                : isSignUp
+                  ? 'Criar conta'
+                  : 'Entrar'}
           </Button>
-          <Button type="button" variant="secondary" onClick={switchMode}>
-            {isSignUp ? 'Já tenho conta' : 'Criar conta'}
+          <Button variant="secondary" onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}>
+            {mode === 'signin' ? 'Criar conta' : 'Voltar para entrar'}
           </Button>
+          {mode === 'signin' && (
+            <Button variant="ghost" onClick={() => switchMode('reset')}>
+              Esqueci minha senha
+            </Button>
+          )}
         </div>
       </form>
     </div>

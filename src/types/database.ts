@@ -77,6 +77,12 @@ isOneToOne: false
       foreignKeyName: "bills_account_id_fkey"
       columns: ["account_id"]
 isOneToOne: false
+      referencedRelation: "account_balances"
+      referencedColumns: ["account_id"]
+    },{
+      foreignKeyName: "bills_account_id_fkey"
+      columns: ["account_id"]
+isOneToOne: false
       referencedRelation: "accounts"
       referencedColumns: ["id"]
     },{
@@ -121,6 +127,12 @@ isOneToOne: false
       foreignKeyName: "transactions_account_id_fkey"
       columns: ["account_id"]
 isOneToOne: false
+      referencedRelation: "account_balances"
+      referencedColumns: ["account_id"]
+    },{
+      foreignKeyName: "transactions_account_id_fkey"
+      columns: ["account_id"]
+isOneToOne: false
       referencedRelation: "accounts"
       referencedColumns: ["id"]
     },{
@@ -133,6 +145,12 @@ isOneToOne: false
       foreignKeyName: "transactions_transfer_account_id_fkey"
       columns: ["transfer_account_id"]
 isOneToOne: false
+      referencedRelation: "account_balances"
+      referencedColumns: ["account_id"]
+    },{
+      foreignKeyName: "transactions_transfer_account_id_fkey"
+      columns: ["transfer_account_id"]
+isOneToOne: false
       referencedRelation: "accounts"
       referencedColumns: ["id"]
     }
@@ -140,10 +158,28 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "account_balances": {
+                  Row: {
+                    "account_id": string | null,"current_balance_cents": number | null
+                  }
+                  Insert: {
+                           "account_id"?: string | null,"current_balance_cents"?: never
+                         }
+                        Update: {
+                           "account_id"?: string | null,"current_balance_cents"?: never
+                         }
+                        Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
-            [_ in never]: never
+            "pay_bill":
+{ Args: { "p_account_id": string,"p_bill_id": string,"p_paid_on": string,"p_reference_month": string }; Returns: string
+                           },
+"unpay_bill":
+{ Args: { "p_bill_id": string,"p_reference_month": string }; Returns: undefined
+                           }
           }
           Enums: {
             "account_type": "checking"|"savings"|"credit_card"|"wallet","bill_frequency": "monthly"|"yearly","category_kind": "income"|"expense","transaction_source": "manual"|"bank","transaction_type": "income"|"expense"|"transfer"

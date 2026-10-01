@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextValue {
@@ -7,6 +8,8 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
+  sendPasswordReset: (email: string) => Promise<string | null>;
+  updatePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -51,12 +54,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null, needsConfirmation: !data.session };
   }
 
+  // RF-02: o link do e-mail abre o app já logado na tela de nova senha
+  async function sendPasswordReset(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/alterar-senha`,
+    });
+    return error ? 'Não foi possível enviar o e-mail. Tente novamente em alguns minutos.' : null;
+  }
+
+  async function updatePassword(password: string) {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (!error) return null;
+    if (error.message.toLowerCase().includes('different')) return 'A nova senha precisa ser diferente da atual.';
+    return error.message.toLowerCase().includes('password') ? 'A senha precisa ter pelo menos 6 caracteres.' : 'Não foi possível alterar a senha.';
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
+    queryClient.clear(); // não deixa dados em cache para o próximo usuário
   }
 
   return (
-    <AuthContext.Provider value={{ session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ session, loading, signIn, signUp, sendPasswordReset, updatePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );

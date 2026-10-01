@@ -12,10 +12,23 @@ export function formatSignedCents(cents: number, type: 'income' | 'expense'): st
   return `${type === 'income' ? '+' : '−'} ${formatCents(Math.abs(cents))}`;
 }
 
-/** "1.234,56" ou "1234,56" -> 123456. Retorna null se inválido. */
+/**
+ * "1.234,56", "1234,56", "1234.5" ou "1234" -> centavos. Retorna null se inválido.
+ * Ponto seguido de 1 ou 2 dígitos no fim é tratado como decimal (teclado em inglês).
+ */
 export function parseToCents(input: string): number | null {
-  const normalized = input.replace(/[^\d,]/g, '').replace(',', '.');
-  if (!normalized) return null;
+  let text = input.trim().replace(/[^\d.,]/g, '');
+  if (!text) return null;
+  if (!text.includes(',') && /\.\d{1,2}$/.test(text)) {
+    text = text.replace(/\.(?=\d{1,2}$)/, ',');
+  }
+  const normalized = text.replace(/\./g, '').replace(',', '.');
+  if (!/^\d*\.?\d*$/.test(normalized) || normalized === '.') return null;
   const value = Number(normalized);
   return Number.isFinite(value) ? Math.round(value * 100) : null;
+}
+
+/** 123456 -> "1234,56" (para preencher campos de edição) */
+export function centsToInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',');
 }
