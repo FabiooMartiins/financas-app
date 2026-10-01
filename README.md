@@ -28,10 +28,16 @@ npx supabase gen types typescript --project-id SEU_ID > src/types/database.ts
 
 ## Publicação (Cloudflare Pages)
 
-- Build command: `npm run build`
-- Output directory: `dist`
-- Variáveis: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- Adicione um arquivo `public/_redirects` com `/* /index.html 200` para as rotas do React Router.
+Produção: https://financas-app-a4b.pages.dev (projeto `financas-app`)
+
+```bash
+npx wrangler login   # uma vez, em um terminal comum
+npm run deploy       # build com o .env.local + upload
+```
+
+- `public/_redirects` (`/* /index.html 200`) faz as rotas do React Router funcionarem.
+- No Supabase (Authentication → URL Configuration), o Site URL é o endereço de produção e
+  `http://localhost:5173/**` fica em Redirect URLs para desenvolvimento.
 
 ## Estrutura
 
