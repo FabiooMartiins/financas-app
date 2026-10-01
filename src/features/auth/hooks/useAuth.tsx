@@ -6,6 +6,7 @@ interface AuthContextValue {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -31,12 +32,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? 'E-mail ou senha incorretos.' : null;
   }
 
+  async function signUp(email: string, password: string) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) {
+      const text = error.message.toLowerCase();
+      const message = text.includes('registered')
+        ? 'Este e-mail já tem cadastro. Use "Entrar".'
+        : text.includes('password')
+          ? 'A senha precisa ter pelo menos 6 caracteres.'
+          : 'Não foi possível criar a conta. Tente novamente.';
+      return { error: message, needsConfirmation: false };
+    }
+    // Sem sessão: o projeto exige confirmação por e-mail
+    return { error: null, needsConfirmation: !data.session };
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
