@@ -11,6 +11,7 @@ import { BillsPage } from '@/features/bills/pages/BillsPage';
 import { CardPage, CardsPage } from '@/features/cards/pages/CardPage';
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { ImportPage } from '@/features/import/pages/ImportPage';
 import { TransactionFormPage } from '@/features/transactions/pages/TransactionFormPage';
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage';
 
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'transacoes', element: <TransactionsPage /> },
       { path: 'transacoes/nova', element: <TransactionFormPage /> },
+      { path: 'transacoes/importar', element: <ImportPage /> },
       { path: 'transacoes/:id', element: <TransactionFormPage /> },
       { path: 'vencimentos', element: <BillsPage /> },
       { path: 'vencimentos/nova', element: <BillFormPage /> },

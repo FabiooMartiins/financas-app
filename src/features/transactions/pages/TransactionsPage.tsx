@@ -43,9 +43,14 @@ export function TransactionsPage() {
       <PageHeader
         title="Transações"
         action={
-          <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
-            Nova transação
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/transacoes/importar" className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
+              Importar extrato
+            </Link>
+            <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
+              Nova transação
+            </Link>
+          </div>
         }
       />
 

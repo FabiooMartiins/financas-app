@@ -237,7 +237,11 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
       </div>
 
       <p className="text-sm text-muted">
-        {card.closing_day === 31 ? 'Compras feitas no último dia do mês' : `Compras feitas a partir do dia ${card.closing_day}`} entram na fatura seguinte. Vencimento em fim de semana ou feriado nacional passa para o próximo dia útil. Para lançar uma compra, use “Nova transação” escolhendo este cartão em
+        <Link to={`/transacoes/importar?conta=${card.id}`} className="font-semibold text-brand underline">
+          Importar fatura (OFX ou CSV)
+        </Link>
+        {' · '}
+        {card.closing_day === 31 ?'Compras feitas no último dia do mês' : `Compras feitas a partir do dia ${card.closing_day}`} entram na fatura seguinte. Vencimento em fim de semana ou feriado nacional passa para o próximo dia útil. Para lançar uma compra, use “Nova transação” escolhendo este cartão em
         “Pago com”.
       </p>
     </>
