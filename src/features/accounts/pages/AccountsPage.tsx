@@ -69,12 +69,17 @@ function AccountList({ accounts }: { accounts: Account[] }) {
   return (
     <Card className="divide-y divide-line">
       {accounts.map((account) => (
-        <Link key={account.id} to={`/contas/${account.id}`} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ground">
+        <Link
+          key={account.id}
+          to={account.type === 'credit_card' ? `/cartoes/${account.id}` : `/contas/${account.id}`}
+          className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ground"
+        >
           <div className="min-w-0">
             <p className="truncate font-semibold">{account.name}</p>
             <p className="text-sm text-muted">
               {accountTypeLabels[account.type]}
               {account.fromBank && ` · ${account.institution ?? 'Banco'}`}
+              {account.type === 'credit_card' && (account.due_day ? ` · vence dia ${account.due_day}` : ' · configurar fatura')}
             </p>
           </div>
           <p className={`shrink-0 font-display font-semibold ${account.current_balance_cents < 0 ? 'text-expense' : ''}`}>

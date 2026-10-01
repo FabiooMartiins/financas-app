@@ -8,6 +8,7 @@ import { ChangePasswordPage } from '@/features/auth/pages/ChangePasswordPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { BillFormPage } from '@/features/bills/pages/BillFormPage';
 import { BillsPage } from '@/features/bills/pages/BillsPage';
+import { CardPage } from '@/features/cards/pages/CardPage';
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { TransactionFormPage } from '@/features/transactions/pages/TransactionFormPage';
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
       { path: 'contas', element: <AccountsPage /> },
       { path: 'contas/nova', element: <AccountFormPage /> },
       { path: 'contas/:id', element: <AccountFormPage /> },
+      { path: 'cartoes/:id', element: <CardPage /> },
       { path: 'categorias', element: <CategoriesPage /> },
       { path: 'conectar-banco', element: <ConnectBankPage /> },
       { path: 'alterar-senha', element: <ChangePasswordPage /> },

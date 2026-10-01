@@ -41,6 +41,9 @@ Feito: auth (cadastro, login, recuperar/alterar senha), contas, categorias, tran
 `pay_bill`/`unpay_bill`), início, relatórios (por categoria, 6 meses, CSV).
 Regras no banco: `supabase/migrations/20261001000000_app_logic.sql` (view `account_balances`,
 RN-03, RN-05 por trigger).
+Cartão de crédito: `accounts.closing_day/due_day/credit_limit_cents`; faturas calculadas no
+cliente em `features/cards/invoices.ts` (compra a partir do fechamento vai para a próxima;
+pagamentos = transferências para o cartão, abatidos da fatura mais antiga).
 
 ## Próximos passos
 1. Integração Open Finance (Edge Function `openfinance-sync`) — falta escolher o agregador

@@ -20,6 +20,11 @@ export interface Account {
   is_active: boolean;
   fromBank: boolean;
   institution: string | null;
+  created_at: string;
+  // Só cartão de crédito
+  credit_limit_cents: number | null;
+  closing_day: number | null;
+  due_day: number | null;
 }
 
 export interface AccountInput {
@@ -27,6 +32,9 @@ export interface AccountInput {
   type: AccountType;
   balance_cents: number;
   is_active: boolean;
+  credit_limit_cents?: number | null;
+  closing_day?: number | null;
+  due_day?: number | null;
 }
 
 // RF-04, RF-05: contas com saldo atual calculado no banco (view account_balances)
@@ -34,7 +42,7 @@ export async function listAccounts(): Promise<Account[]> {
   const [accounts, balances] = await Promise.all([
     supabase
       .from('accounts')
-      .select('id, name, type, balance_cents, is_active, connection_id, connection:bank_connections(institution_name)')
+      .select('id, name, type, balance_cents, is_active, connection_id, created_at, credit_limit_cents, closing_day, due_day, connection:bank_connections(institution_name)')
       .order('name'),
     supabase.from('account_balances').select('account_id, current_balance_cents'),
   ]);
@@ -51,6 +59,10 @@ export async function listAccounts(): Promise<Account[]> {
     is_active: a.is_active,
     fromBank: a.connection_id !== null,
     institution: a.connection?.institution_name ?? null,
+    created_at: a.created_at,
+    credit_limit_cents: a.credit_limit_cents,
+    closing_day: a.closing_day,
+    due_day: a.due_day,
   }));
 }
 

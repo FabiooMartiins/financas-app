@@ -7,11 +7,13 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import { BillOccurrenceItem } from '@/features/bills/components/BillOccurrenceItem';
 import { useBillOccurrences } from '@/features/bills/hooks/useBills';
+import { InvoiceSummaryItem } from '@/features/cards/components/InvoiceParts';
+import { useCards } from '@/features/cards/hooks/useCards';
 import { totalsByMonth } from '@/features/reports/api';
 import { useMovements } from '@/features/reports/hooks/useMovements';
 import { listTransactions } from '@/features/transactions/api';
 import { TransactionItem } from '@/features/transactions/components/TransactionItem';
-import { formatDayMonth, formatMonthYear, startOfMonth, today } from '@/lib/dates';
+import { daysBetween, formatDayMonth, formatMonthYear, monthRange, startOfMonth, today } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 
 // RF-22: saldo total, receitas/despesas do mês, próximos vencimentos (RF-19, RF-20), últimas transações
@@ -21,6 +23,7 @@ export function DashboardPage() {
   const movements = useMovements(month, 1);
   // 2 meses para trás: conta não paga continua aparecendo como vencida (RN-04)
   const bills = useBillOccurrences(month, 2);
+  const cards = useCards();
   const recent = useQuery({
     queryKey: ['transactions', 'recent'],
     queryFn: () => listTransactions({ start: '2000-01-01', end: today() }),
@@ -31,8 +34,32 @@ export function DashboardPage() {
   const totals = movements.data ? totalsByMonth(movements.data, month, 1)[0] : undefined;
 
   const pending = bills.data?.filter((o) => o.status !== 'paid' && (o.status === 'overdue' || o.month.getTime() === month.getTime())) ?? [];
-  const alerts = pending.filter((o) => o.status === 'overdue' || o.status === 'due-soon');
-  const nextBills = pending.slice(0, 5);
+  const todayIso = today();
+  const monthEnd = monthRange(month).end;
+  // Faturas: fechadas/vencidas com saldo, ou que vencem até o fim do mês (RN-02)
+  const pendingInvoices =
+    cards.data
+      ?.flatMap((c) => c.invoices ?? [])
+      .filter((i) => i.remaining > 0 && (i.status === 'closed' || i.status === 'overdue' || i.dueDate <= monthEnd)) ?? [];
+
+  // RF-20: lembretes de contas e faturas
+  const overdueNames = [
+    ...pending.filter((o) => o.status === 'overdue').map((o) => o.bill.name),
+    ...pendingInvoices.filter((i) => i.status === 'overdue').map((i) => `Fatura ${i.cardName}`),
+  ];
+  const dueSoonNames = [
+    ...pending.filter((o) => o.status === 'due-soon').map((o) => `${o.bill.name} (${formatDayMonth(o.dueDate)})`),
+    ...pendingInvoices
+      .filter((i) => i.status === 'closed' && daysBetween(todayIso, i.dueDate) <= 5)
+      .map((i) => `Fatura ${i.cardName} (${formatDayMonth(i.dueDate)})`),
+  ];
+
+  const upcoming = [
+    ...pending.map((o) => ({ due: o.dueDate, key: `b-${o.bill.id}-${o.dueDate}`, node: <BillOccurrenceItem occurrence={o} showMonth /> })),
+    ...pendingInvoices.map((i) => ({ due: i.dueDate, key: `f-${i.cardId}-${i.key}`, node: <InvoiceSummaryItem invoice={i} /> })),
+  ]
+    .sort((a, b) => a.due.localeCompare(b.due))
+    .slice(0, 6);
   const isNewUser = accounts.data?.length === 0;
 
   return (
@@ -57,28 +84,16 @@ export function DashboardPage() {
       )}
 
       {/* RF-20: lembrete de vencimento */}
-      {alerts.length > 0 && (
+      {(overdueNames.length > 0 || dueSoonNames.length > 0) && (
         <Link
           to="/vencimentos"
           role="alert"
           className={`flex flex-col gap-1 rounded-2xl p-4 text-sm font-semibold ${
-            alerts.some((o) => o.status === 'overdue') ? 'bg-expense-soft text-expense' : 'bg-[#FFF4DC] text-[#8A5A00]'
+            overdueNames.length > 0 ? 'bg-expense-soft text-expense' : 'bg-[#FFF4DC] text-[#8A5A00]'
           }`}
         >
-          {alerts.filter((o) => o.status === 'overdue').length > 0 && (
-            <span>
-              {alerts.filter((o) => o.status === 'overdue').length} conta(s) vencida(s) sem pagamento.
-            </span>
-          )}
-          {alerts.filter((o) => o.status === 'due-soon').length > 0 && (
-            <span>
-              Vencendo em breve:{' '}
-              {alerts
-                .filter((o) => o.status === 'due-soon')
-                .map((o) => `${o.bill.name} (${formatDayMonth(o.dueDate)})`)
-                .join(', ')}
-            </span>
-          )}
+          {overdueNames.length > 0 && <span>Vencido sem pagamento: {overdueNames.join(', ')}.</span>}
+          {dueSoonNames.length > 0 && <span>Vencendo em breve: {dueSoonNames.join(', ')}.</span>}
         </Link>
       )}
 
@@ -110,11 +125,11 @@ export function DashboardPage() {
           </div>
           {bills.isPending && <LoadingState />}
           {bills.error && <ErrorState error={bills.error} />}
-          {bills.data && nextBills.length === 0 && <EmptyState>Nenhuma conta pendente neste mês.</EmptyState>}
-          {nextBills.length > 0 && (
+          {bills.data && cards.data && upcoming.length === 0 && <EmptyState>Nenhuma conta pendente neste mês.</EmptyState>}
+          {upcoming.length > 0 && (
             <Card className="divide-y divide-line">
-              {nextBills.map((o) => (
-                <BillOccurrenceItem key={`${o.bill.id}-${o.dueDate}`} occurrence={o} showMonth />
+              {upcoming.map((item) => (
+                <div key={item.key}>{item.node}</div>
               ))}
             </Card>
           )}

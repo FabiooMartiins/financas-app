@@ -10,8 +10,9 @@ import { Select } from '@/components/ui/Select';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import { createBill, payBill } from '@/features/bills/api';
+import { dueDate as invoiceDueDate, invoiceMonthFor } from '@/features/cards/invoices';
 import { useCategories } from '@/features/categories/hooks/useCategories';
-import { parseISODate, startOfMonth, today } from '@/lib/dates';
+import { formatDate, parseISODate, startOfMonth, today } from '@/lib/dates';
 import { centsToInput, formatCents, parseToCents } from '@/lib/money';
 import { refreshAll } from '@/lib/queryClient';
 import type { TransactionInput, TransactionRow, TransactionType } from '../api';
@@ -204,6 +205,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
               accounts={active}
               disabled={fromBank}
             />
+            <CardInvoiceHint account={active.find((a) => a.id === accountId)} date={date} type={type} />
             <Select label="Categoria" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">Sem categoria</option>
               {kindCategories.map((c) => (
@@ -308,4 +310,20 @@ function AccountSelect({
       ))}
     </Select>
   );
+}
+
+/** Compra no cartão: mostra em qual fatura cai (RN-02). */
+function CardInvoiceHint({
+  account,
+  date,
+  type,
+}: {
+  account?: { type: string; closing_day: number | null; due_day: number | null };
+  date: string;
+  type: TransactionType;
+}) {
+  if (type !== 'expense' || !date || account?.type !== 'credit_card' || !account.closing_day || !account.due_day) return null;
+  const card = { closing_day: account.closing_day, due_day: account.due_day };
+  const { year, month } = invoiceMonthFor(card, date);
+  return <p className="-mt-2 text-sm text-muted">Entra na fatura que vence em {formatDate(invoiceDueDate(card, year, month))}.</p>;
 }

@@ -37,6 +37,9 @@ function AccountForm({ account }: { account?: Account }) {
     return cents < 0 ? `-${centsToInput(-cents)}` : centsToInput(cents);
   });
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
+  const [limit, setLimit] = useState(account?.credit_limit_cents != null ? centsToInput(account.credit_limit_cents) : '');
+  const [closingDay, setClosingDay] = useState(String(account?.closing_day ?? ''));
+  const [dueDay, setDueDay] = useState(String(account?.due_day ?? ''));
   const [formError, setFormError] = useState<string | null>(null);
 
   const fromBank = account?.fromBank ?? false;
@@ -51,6 +54,11 @@ function AccountForm({ account }: { account?: Account }) {
       return;
     }
     const signed = negative ? -cents : cents;
+    const limitCents = limit.trim() ? parseToCents(limit) : null;
+    if (isCard && limit.trim() && limitCents === null) {
+      setFormError('Limite inválido. Use o formato 1.234,56.');
+      return;
+    }
     save.mutate(
       {
         id: account?.id,
@@ -59,6 +67,10 @@ function AccountForm({ account }: { account?: Account }) {
           type,
           balance_cents: fromBank ? account!.balance_cents : isCard ? -signed : signed,
           is_active: isActive,
+          // Campos de cartão ficam vazios nos outros tipos
+          credit_limit_cents: isCard ? limitCents : null,
+          closing_day: isCard ? Number(closingDay) : null,
+          due_day: isCard ? Number(dueDay) : null,
         },
       },
       { onSuccess: () => navigate('/contas') },
@@ -81,7 +93,7 @@ function AccountForm({ account }: { account?: Account }) {
           <p className="text-sm text-muted">O saldo desta conta vem do banco (Open Finance) e é atualizado na sincronização.</p>
         ) : (
           <Input
-            label={isCard ? 'Fatura em aberto hoje (R$)' : 'Saldo inicial (R$)'}
+            label={isCard ? 'Valor já gasto e ainda não pago (R$)' : 'Saldo inicial (R$)'}
             inputMode="decimal"
             placeholder="0,00"
             value={amount}
@@ -91,9 +103,41 @@ function AccountForm({ account }: { account?: Account }) {
         )}
         <p className="-mt-2 text-sm text-muted">
           {isCard
-            ? 'Compras no cartão entram como despesa na data da compra. O pagamento da fatura é uma transferência da conta corrente para o cartão.'
+            ? 'Quanto você deve hoje no cartão (fatura fechada não paga + compras da fatura atual). Esse valor entra na próxima fatura a vencer. Parcelas futuras, lance como compra parcelada. O pagamento da fatura é uma transferência para o cartão.'
             : 'O saldo atual é este valor somado às transações lançadas. Use "-" na frente para saldo negativo.'}
         </p>
+
+        {isCard && (
+          <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+            <h2 className="font-display font-semibold">Fatura</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Dia do fechamento"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={31}
+                required
+                value={closingDay}
+                onChange={(e) => setClosingDay(e.target.value)}
+              />
+              <Input
+                label="Dia do vencimento"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={31}
+                required
+                value={dueDay}
+                onChange={(e) => setDueDay(e.target.value)}
+              />
+            </div>
+            <p className="-mt-2 text-sm text-muted">
+              Estão no app do banco ou na fatura. Compras a partir do dia do fechamento entram na fatura seguinte.
+            </p>
+            <Input label="Limite (R$, opcional)" inputMode="decimal" placeholder="0,00" value={limit} onChange={(e) => setLimit(e.target.value)} />
+          </div>
+        )}
 
         {account && (
           <label className="flex min-h-11 items-center gap-3 font-semibold">
