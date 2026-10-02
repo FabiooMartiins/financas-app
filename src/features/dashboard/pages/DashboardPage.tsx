@@ -31,7 +31,9 @@ export function DashboardPage() {
   });
 
   const totalBalance = accounts.data?.filter((a) => a.is_active).reduce((s, a) => s + a.current_balance_cents, 0);
-  const totals = movements.data ? totalsByMonth(movements.data, month, 1)[0] : undefined;
+  // Estorno no cartão abate a despesa em vez de contar como receita
+  const cardIds = new Set(accounts.data?.filter((a) => a.type === 'credit_card').map((a) => a.id));
+  const totals = movements.data && accounts.data ? totalsByMonth(movements.data, month, 1, cardIds)[0] : undefined;
 
   const notDone = bills.data?.filter((o) => o.status !== 'paid' && (o.status === 'overdue' || o.month.getTime() === month.getTime())) ?? [];
   const pending = notDone.filter((o) => o.bill.kind === 'expense');

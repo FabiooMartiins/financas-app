@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { TransactionInput } from '@/features/transactions/api';
+import type { StoredImport } from './review';
 
 export interface ExistingTransaction {
   id: string;
@@ -9,13 +10,14 @@ export interface ExistingTransaction {
   account_id: string;
   transfer_account_id: string | null;
   external_id: string | null;
+  description: string;
 }
 
 /** Transações que já mexem na conta no período do arquivo (para achar duplicadas). */
 export async function listAccountTransactions(accountId: string, start: string, end: string): Promise<ExistingTransaction[]> {
   const { data, error } = await supabase
     .from('transactions')
-    .select('id, type, amount_cents, occurred_on, account_id, transfer_account_id, external_id')
+    .select('id, type, amount_cents, occurred_on, account_id, transfer_account_id, external_id, description')
     .or(`account_id.eq.${accountId},transfer_account_id.eq.${accountId}`)
     .gte('occurred_on', start)
     .lte('occurred_on', end)
@@ -36,15 +38,26 @@ export async function listCategoryHistory(): Promise<{ description: string; cate
   return data as { description: string; category_id: string }[];
 }
 
-/** Quais destes external_id já existem (em qualquer data). */
-export async function findExistingExternalIds(externalIds: string[]): Promise<Set<string>> {
-  const found = new Set<string>();
+/** Quais destes external_id já existem (em qualquer data), com a data e a descrição gravadas. */
+export async function findExistingExternalIds(externalIds: string[]): Promise<Map<string, StoredImport>> {
+  const found = new Map<string, StoredImport>();
   for (let i = 0; i < externalIds.length; i += 100) {
-    const { data, error } = await supabase.from('transactions').select('external_id').in('external_id', externalIds.slice(i, i + 100));
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('id, external_id, occurred_on, description')
+      .in('external_id', externalIds.slice(i, i + 100));
     if (error) throw error;
-    for (const row of data) if (row.external_id) found.add(row.external_id);
+    for (const row of data) if (row.external_id) found.set(row.external_id, row);
   }
   return found;
+}
+
+/** Move parcelas já importadas para o mês certo (e põe a descrição no padrão "(n/N)"). */
+export async function fixImported(fixes: StoredImport[]): Promise<void> {
+  for (const fix of fixes) {
+    const { error } = await supabase.from('transactions').update({ occurred_on: fix.occurred_on, description: fix.description }).eq('id', fix.id);
+    if (error) throw error;
+  }
 }
 
 /**

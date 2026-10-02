@@ -7,6 +7,8 @@ export interface StatementEntry {
   amountCents: number;
   /** Identificador do lançamento no banco (FITID do OFX ou coluna de ID do CSV) */
   bankId: string | null;
+  /** Data como veio do banco, quando o app ajustou `date` (parcela do cartão) */
+  bankDate?: string;
 }
 
 export interface Statement {

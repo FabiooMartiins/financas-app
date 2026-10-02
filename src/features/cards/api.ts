@@ -14,6 +14,7 @@ export async function listCardMovements(cardIds: string[]): Promise<CardMovement
       .or(`account_id.in.(${ids}),transfer_account_id.in.(${ids})`)
       .order('occurred_on')
       .order('created_at')
+      .order('id') // desempate estável para a paginação (importação grava várias com o mesmo created_at)
       .range(page * pageSize, page * pageSize + pageSize - 1);
     if (error) throw error;
     rows.push(...(data as unknown as CardMovement[]));

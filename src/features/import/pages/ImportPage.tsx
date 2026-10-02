@@ -8,12 +8,14 @@ import { Select } from '@/components/ui/Select';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import type { Account } from '@/features/accounts/api';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
+import { isConfiguredCard } from '@/features/cards/hooks/useCards';
 import type { Category } from '@/features/categories/api';
 import { useCategories } from '@/features/categories/hooks/useCategories';
 import { formatDate, formatDayMonth, formatMonthYear, parseISODate, toISODate } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { refreshAll } from '@/lib/queryClient';
-import { findExistingExternalIds, insertImported, listAccountTransactions, listCategoryHistory } from '../api';
+import { findExistingExternalIds, fixImported, insertImported, listAccountTransactions, listCategoryHistory } from '../api';
+import { alignCardInstallments } from '../cardInstallments';
 import {
   csvEntries,
   decodeFile,
@@ -31,6 +33,8 @@ interface ImportResult {
   inserted: number;
   /** Marcados, mas já existiam no app (mesmo identificador) */
   skipped: number;
+  /** Parcelas já importadas que foram movidas para o mês certo */
+  fixed: number;
   firstDate: string;
 }
 
@@ -90,8 +94,10 @@ export function ImportPage() {
     }
   }
 
-  const entries: StatementEntry[] =
+  const rawEntries: StatementEntry[] =
     loaded?.kind === 'ofx' ? loaded.statement.entries : loaded?.kind === 'csv' && loaded.mapping ? csvEntries(loaded.rows, loaded.mapping) : [];
+  // Cartão: parcelas que o banco manda na data da compra original vão para a fatura do arquivo
+  const entries = isConfiguredCard(account) ? alignCardInstallments(rawEntries, account) : rawEntries;
 
   return (
     <>
@@ -150,7 +156,12 @@ export function ImportPage() {
               {done.skipped} {done.skipped === 1 ? 'já estava' : 'já estavam'} no app e {done.skipped === 1 ? 'foi ignorada' : 'foram ignoradas'}.
             </p>
           )}
-          {done.inserted > 0 && (
+          {done.fixed > 0 && (
+            <p className="text-sm text-muted">
+              {done.fixed} {done.fixed === 1 ? 'parcela importada antes foi movida' : 'parcelas importadas antes foram movidas'} para o mês certo.
+            </p>
+          )}
+          {(done.inserted > 0 || done.fixed > 0) && (
             <div className="flex flex-wrap gap-2">
               <Link to={`/transacoes?mes=${done.firstDate.slice(0, 7)}`} className={buttonClasses('primary', 'h-11 px-4 text-sm')}>
                 Ver em {formatMonthYear(parseISODate(done.firstDate)).toLowerCase()}
@@ -259,19 +270,20 @@ function Review({
   bankBalance: Statement['balance'];
   onDone: (result: ImportResult) => void;
 }) {
-  const dates = entries.map((e) => e.date).sort();
+  // Inclui a data original do banco: parcelas já gravadas podem estar no mês da compra
+  const dates = entries.flatMap((e) => (e.bankDate ? [e.date, e.bankDate] : [e.date])).sort();
   const [first, last] = [dates[0], dates[dates.length - 1]];
   const base = useQuery({
     queryKey: ['import-review', account.id, first, last, entries.length],
     queryFn: async () => {
-      const [existing, importedIds, history] = await Promise.all([
+      const [existing, imported, history] = await Promise.all([
         // ±5 dias para achar lançamentos manuais com data um pouco diferente
         listAccountTransactions(account.id, shiftDays(first, -5), shiftDays(last, 5)),
         // Confere em todas as datas: o mesmo ID pode já ter sido gravado em outro mês
         findExistingExternalIds(importExternalIds(entries, account.id)),
         listCategoryHistory(),
       ]);
-      return { existing, importedIds, history };
+      return { existing, imported, history };
     },
     staleTime: 0,
     gcTime: 0,
@@ -315,10 +327,14 @@ function ReviewList({
   const selected = visible.filter((r) => r.selected);
   const missingAccount = selected.some((r) => r.type === 'transfer' && !r.otherAccountId);
   const otherAccounts = accounts.filter((a) => a.id !== account.id);
+  const fixes = rows.flatMap((r) => (r.fix ? [r.fix] : []));
+  const nothingToDo = selected.length === 0 && fixes.length === 0;
 
   const save = useMutation({
-    mutationFn: () =>
-      insertImported(
+    mutationFn: async () => {
+      await fixImported(fixes);
+      if (selected.length === 0) return 0;
+      return insertImported(
         selected.map((r) => {
           const out = r.entry.amountCents < 0;
           const transfer = r.type === 'transfer';
@@ -334,10 +350,16 @@ function ReviewList({
             external_id: r.externalId,
           };
         }),
-      ),
+      );
+    },
     onSuccess: async (inserted) => {
       await refreshAll();
-      onDone({ inserted, skipped: selected.length - inserted, firstDate: selected.map((r) => r.entry.date).sort()[0] });
+      onDone({
+        inserted,
+        skipped: selected.length - inserted,
+        fixed: fixes.length,
+        firstDate: [...selected.map((r) => r.entry.date), ...fixes.map((f) => f.occurred_on)].sort()[0],
+      });
     },
   });
 
@@ -355,10 +377,16 @@ function ReviewList({
           {duplicates > 0 && ` · ${duplicates} possivelmente já lançados (desmarcados)`}
           {alreadyImported > 0 && ` · ${alreadyImported} já importados antes (ignorados)`}
         </p>
+        {fixes.length > 0 && (
+          <p className="rounded-xl bg-[#FFF4DC] p-3 text-sm font-semibold text-[#8A5A00]">
+            {fixes.length} {fixes.length === 1 ? 'parcela importada antes está' : 'parcelas importadas antes estão'} no mês da compra original e{' '}
+            {fixes.length === 1 ? 'será movida' : 'serão movidas'} para a fatura certa.
+          </p>
+        )}
       </div>
 
       {visible.length === 0 ? (
-        <EmptyState>Tudo deste arquivo já foi importado. O extrato está em dia.</EmptyState>
+        fixes.length === 0 && <EmptyState>Tudo deste arquivo já foi importado. O extrato está em dia.</EmptyState>
       ) : (
         <>
           <div className="flex gap-2">
@@ -397,13 +425,15 @@ function ReviewList({
 
       {save.error && <ErrorState error={save.error} />}
       {missingAccount && <p className="text-sm font-semibold text-expense">Escolha a outra conta nas transferências marcadas.</p>}
-      {visible.length > 0 && (
-        <Button disabled={selected.length === 0 || missingAccount || save.isPending} onClick={() => save.mutate()}>
+      {(visible.length > 0 || fixes.length > 0) && (
+        <Button disabled={nothingToDo || missingAccount || save.isPending} onClick={() => save.mutate()}>
           {save.isPending
             ? 'Importando…'
-            : selected.length === 0
+            : nothingToDo
               ? 'Nada marcado para importar'
-              : `Importar ${selected.length} ${selected.length === 1 ? 'transação' : 'transações'}`}
+              : selected.length === 0
+                ? `Corrigir ${fixes.length} ${fixes.length === 1 ? 'parcela' : 'parcelas'}`
+                : `Importar ${selected.length} ${selected.length === 1 ? 'transação' : 'transações'}`}
         </Button>
       )}
     </section>
