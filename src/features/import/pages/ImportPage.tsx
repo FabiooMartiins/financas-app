@@ -10,10 +10,10 @@ import type { Account } from '@/features/accounts/api';
 import { useAccounts } from '@/features/accounts/hooks/useAccounts';
 import type { Category } from '@/features/categories/api';
 import { useCategories } from '@/features/categories/hooks/useCategories';
-import { formatDate, formatDayMonth, parseISODate, toISODate } from '@/lib/dates';
+import { formatDate, formatDayMonth, formatMonthYear, parseISODate, toISODate } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { refreshAll } from '@/lib/queryClient';
-import { insertImported, listAccountTransactions, listCategoryHistory } from '../api';
+import { findExistingExternalIds, insertImported, listAccountTransactions, listCategoryHistory } from '../api';
 import {
   csvEntries,
   decodeFile,
@@ -25,7 +25,14 @@ import {
   type Statement,
   type StatementEntry,
 } from '../parsers';
-import { buildReview, type ReviewRow, type RowType } from '../review';
+import { buildReview, importExternalIds, type ReviewRow, type RowType } from '../review';
+
+interface ImportResult {
+  inserted: number;
+  /** Marcados, mas já existiam no app (mesmo identificador) */
+  skipped: number;
+  firstDate: string;
+}
 
 type Loaded =
   | { kind: 'ofx'; name: string; statement: Statement }
@@ -39,7 +46,7 @@ export function ImportPage() {
   const [chosenAccountId, setAccountId] = useState(params.get('conta') ?? '');
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [done, setDone] = useState<number | null>(null);
+  const [done, setDone] = useState<ImportResult | null>(null);
 
   if (isPending) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
@@ -136,11 +143,25 @@ export function ImportPage() {
       {done !== null && (
         <Card className="flex flex-col gap-3 p-5">
           <p className="font-display font-semibold">
-            {done} {done === 1 ? 'transação importada' : 'transações importadas'}.
+            {done.inserted} {done.inserted === 1 ? 'transação importada' : 'transações importadas'}.
           </p>
-          <Link to="/transacoes" className={buttonClasses('primary', 'self-start')}>
-            Ver transações
-          </Link>
+          {done.skipped > 0 && (
+            <p className="text-sm text-muted">
+              {done.skipped} {done.skipped === 1 ? 'já estava' : 'já estavam'} no app e {done.skipped === 1 ? 'foi ignorada' : 'foram ignoradas'}.
+            </p>
+          )}
+          {done.inserted > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/transacoes?mes=${done.firstDate.slice(0, 7)}`} className={buttonClasses('primary', 'h-11 px-4 text-sm')}>
+                Ver em {formatMonthYear(parseISODate(done.firstDate)).toLowerCase()}
+              </Link>
+              {account.type === 'credit_card' && (
+                <Link to={`/cartoes/${account.id}`} className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
+                  Ver faturas do cartão
+                </Link>
+              )}
+            </div>
+          )}
         </Card>
       )}
 
@@ -152,9 +173,9 @@ export function ImportPage() {
           categories={categories}
           entries={entries}
           bankBalance={loaded.kind === 'ofx' ? loaded.statement.balance : null}
-          onDone={(count) => {
+          onDone={(result) => {
             setLoaded(null);
-            setDone(count);
+            setDone(result);
           }}
         />
       )}
@@ -236,19 +257,21 @@ function Review({
   categories: Category[];
   entries: StatementEntry[];
   bankBalance: Statement['balance'];
-  onDone: (count: number) => void;
+  onDone: (result: ImportResult) => void;
 }) {
   const dates = entries.map((e) => e.date).sort();
   const [first, last] = [dates[0], dates[dates.length - 1]];
   const base = useQuery({
-    queryKey: ['import-review', account.id, first, last],
+    queryKey: ['import-review', account.id, first, last, entries.length],
     queryFn: async () => {
-      const [existing, history] = await Promise.all([
+      const [existing, importedIds, history] = await Promise.all([
         // ±5 dias para achar lançamentos manuais com data um pouco diferente
         listAccountTransactions(account.id, shiftDays(first, -5), shiftDays(last, 5)),
+        // Confere em todas as datas: o mesmo ID pode já ter sido gravado em outro mês
+        findExistingExternalIds(importExternalIds(entries, account.id)),
         listCategoryHistory(),
       ]);
-      return { existing, history };
+      return { existing, importedIds, history };
     },
     staleTime: 0,
     gcTime: 0,
@@ -281,7 +304,7 @@ function ReviewList({
   accounts: Account[];
   categories: Category[];
   bankBalance: Statement['balance'];
-  onDone: (count: number) => void;
+  onDone: (result: ImportResult) => void;
 }) {
   const [rows, setRows] = useState(initialRows);
   const update = (key: string, change: Partial<ReviewRow>) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...change } : r)));
@@ -312,9 +335,9 @@ function ReviewList({
           };
         }),
       ),
-    onSuccess: async () => {
+    onSuccess: async (inserted) => {
       await refreshAll();
-      onDone(selected.length);
+      onDone({ inserted, skipped: selected.length - inserted, firstDate: selected.map((r) => r.entry.date).sort()[0] });
     },
   });
 

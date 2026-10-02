@@ -36,12 +36,30 @@ export async function listCategoryHistory(): Promise<{ description: string; cate
   return data as { description: string; category_id: string }[];
 }
 
-/** RNF-13: external_id único por usuário; reimportar o mesmo lançamento é ignorado. */
-export async function insertImported(rows: (TransactionInput & { external_id: string })[]): Promise<void> {
-  for (let i = 0; i < rows.length; i += 500) {
-    const { error } = await supabase
-      .from('transactions')
-      .upsert(rows.slice(i, i + 500), { onConflict: 'user_id,external_id', ignoreDuplicates: true });
+/** Quais destes external_id já existem (em qualquer data). */
+export async function findExistingExternalIds(externalIds: string[]): Promise<Set<string>> {
+  const found = new Set<string>();
+  for (let i = 0; i < externalIds.length; i += 100) {
+    const { data, error } = await supabase.from('transactions').select('external_id').in('external_id', externalIds.slice(i, i + 100));
     if (error) throw error;
+    for (const row of data) if (row.external_id) found.add(row.external_id);
   }
+  return found;
+}
+
+/**
+ * RNF-13: external_id único por usuário; reimportar o mesmo lançamento é ignorado.
+ * Retorna quantas transações foram gravadas de fato.
+ */
+export async function insertImported(rows: (TransactionInput & { external_id: string })[]): Promise<number> {
+  let inserted = 0;
+  for (let i = 0; i < rows.length; i += 500) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .upsert(rows.slice(i, i + 500), { onConflict: 'user_id,external_id', ignoreDuplicates: true })
+      .select('id');
+    if (error) throw error;
+    inserted += data.length;
+  }
+  return inserted;
 }

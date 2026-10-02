@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MonthSwitcher } from '@/components/ui/MonthSwitcher';
@@ -15,7 +15,12 @@ import { useTransactions } from '../hooks/useTransactions';
 
 // RF-11 a RF-15: lista do mês com busca e filtros, agrupada por dia
 export function TransactionsPage() {
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  // ?mes=aaaa-mm abre direto num mês (ex.: depois de importar um extrato antigo)
+  const [params] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const match = /^(\d{4})-(\d{2})$/.exec(params.get('mes') ?? '');
+    return match ? new Date(Number(match[1]), Number(match[2]) - 1, 1) : startOfMonth(new Date());
+  });
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim(), 350);
   const [type, setType] = useState<TransactionType | ''>('');
