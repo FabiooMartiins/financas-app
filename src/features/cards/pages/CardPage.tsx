@@ -105,9 +105,10 @@ export function CardPage() {
       {future.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-bold text-muted">Próximas faturas (parcelas já lançadas)</h2>
-          {future.map((i) => (
+          {future.slice(0, 2).map((i) => (
             <InvoiceCard key={i.key} invoice={i} defaultOpen={false} />
           ))}
+          {future.length > 2 && <FutureSummary invoices={future.slice(2)} />}
         </section>
       )}
 
@@ -125,6 +126,30 @@ export function CardPage() {
         “Pago com”.
       </p>
     </>
+  );
+}
+
+/** Parcelas mais distantes resumidas numa linha, em vez de um cartão por mês. */
+function FutureSummary({ invoices }: { invoices: Invoice[] }) {
+  const total = invoices.reduce((s, i) => s + Math.max(i.total, 0), 0);
+  const last = invoices[invoices.length - 1];
+  return (
+    <details className="rounded-2xl border border-line bg-surface p-4 text-sm">
+      <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 font-semibold">
+        <span>
+          Mais {invoices.length} faturas até {formatDayMonth(last.dueDate).slice(3)}/{last.dueDate.slice(0, 4)}
+        </span>
+        <span className="font-display">{formatCents(total)}</span>
+      </summary>
+      <ul className="divide-y divide-line">
+        {invoices.map((i) => (
+          <li key={i.key} className="flex min-h-11 items-center justify-between gap-3 py-2">
+            <span>{invoiceTitle(i)}</span>
+            <span className="font-semibold">{formatCents(Math.max(i.total, 0))}</span>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

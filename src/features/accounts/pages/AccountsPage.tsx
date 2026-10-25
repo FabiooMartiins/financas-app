@@ -134,10 +134,15 @@ function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Ma
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{account.name}</p>
               <p className="truncate text-sm text-muted">
-                {accountTypeLabels[account.type]}
+                {/* O grupo já diz o tipo; aqui vai o que muda de conta para conta */}
+                {isCard
+                  ? account.due_day
+                    ? `Vence dia ${account.due_day}`
+                    : 'Configurar fatura'
+                  : account.yield_note
+                    ? `Rende ${account.yield_note}`
+                    : accountTypeLabels[account.type]}
                 {account.fromBank && ` · ${account.institution ?? 'Banco'}`}
-                {isCard && (account.due_day ? ` · vence dia ${account.due_day}` : ' · configurar fatura')}
-                {account.yield_note && ` · ${account.yield_note}`}
                 {accountGroup(account.type) === 'bank' && !account.include_in_total && ' · fora do saldo total'}
               </p>
             </div>
