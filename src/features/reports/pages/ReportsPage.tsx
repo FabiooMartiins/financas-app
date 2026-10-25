@@ -12,6 +12,7 @@ import { exportTransactionsCsv, totalsByCategory, totalsByMonth } from '../api';
 import { CategoryBreakdown } from '../components/CategoryBreakdown';
 import { IncomeExpenseChart } from '../components/IncomeExpenseChart';
 import { useMovements } from '../hooks/useMovements';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 const HISTORY_MONTHS = 6;
 
@@ -31,6 +32,7 @@ export function ReportsPage() {
   return (
     <>
       <PageHeader title="Relatórios" action={<ExportButton month={month} />} />
+      <SectionTabs section="movimentos" />
       <MonthSwitcher month={month} onChange={setMonth} />
 
       {movements.isPending && <LoadingState />}

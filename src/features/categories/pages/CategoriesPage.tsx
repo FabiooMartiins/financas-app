@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { ErrorState, LoadingState } from '@/components/ui/States';
-import { categoryColors, type Category, type CategoryKind } from '../api';
+import { categoryColorNames, categoryColors, type Category, type CategoryKind } from '../api';
 import { useCategories, useDeleteCategory, useSaveCategory } from '../hooks/useCategories';
 
 // RF-16: categorias e subcategorias de receitas e despesas
@@ -22,7 +22,7 @@ export function CategoriesPage() {
     <>
       <PageHeader
         title="Categorias"
-        backTo="/contas"
+        backTo="/configuracoes"
         action={
           !editing && (
             <Button className="h-11 px-4 text-sm" onClick={() => setEditing('new')}>
@@ -115,19 +115,30 @@ function CategoryForm({
         </Select>
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1.5 text-sm font-semibold">Cor</legend>
-          <div className="flex flex-wrap gap-2">
-            {categoryColors.map((c) => (
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+            {categoryColorNames.map(([c, colorName]) => (
               <button
                 key={c}
                 type="button"
-                aria-label={`Cor ${c}`}
-                aria-pressed={color === c}
+                aria-label={colorName}
+                title={colorName}
+                aria-pressed={color.toUpperCase() === c}
                 onClick={() => setColor(c)}
-                className={`size-11 rounded-full border-4 ${color === c ? 'border-ink' : 'border-surface'}`}
+                className={`aspect-square w-full max-w-11 rounded-full border-4 ${color.toUpperCase() === c ? 'border-ink' : 'border-surface'}`}
                 style={{ background: c }}
               />
             ))}
           </div>
+          {/* Qualquer outra cor, pelo seletor do aparelho */}
+          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value.toUpperCase())}
+              className="size-11 shrink-0 cursor-pointer rounded-full border border-line-strong bg-surface"
+            />
+            {categoryColors.includes(color.toUpperCase()) ? 'Outra cor…' : `Cor personalizada ${color.toUpperCase()}`}
+          </label>
         </fieldset>
 
         {(save.error || remove.error) && <ErrorState error={save.error ?? remove.error} />}

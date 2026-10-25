@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { ErrorState, LoadingState } from '@/components/ui/States';
+import { maskBankAccount, maskBranch, maskDay } from '@/lib/masks';
 import { centsToInput, parseToCents } from '@/lib/money';
 import { accountGroup, accountTypeLabels, type Account, type AccountType } from '../api';
 import { AdjustBalanceForm } from '../components/AdjustBalanceForm';
 import { LogoPicker } from '../components/LogoPicker';
 import { useAccounts, useDeleteAccount, useSaveAccount } from '../hooks/useAccounts';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 // RF-04: cadastro e edição de contas (bancárias, cartões e investimentos)
 // RF-30 ajuste de saldo, RF-32 logo, RN-07 entrar ou não no saldo total
@@ -47,6 +49,10 @@ function AccountForm({ account }: { account?: Account }) {
   const [dueDay, setDueDay] = useState(String(account?.due_day ?? ''));
   const [includeInTotal, setIncludeInTotal] = useState(account?.include_in_total ?? true);
   const [yieldNote, setYieldNote] = useState(account?.yield_note ?? '');
+  const [branch, setBranch] = useState(account?.bank_branch ?? '');
+  const [bankAccount, setBankAccount] = useState(account?.bank_account ?? '');
+  const [cardNames, setCardNames] = useState<string[]>(account?.card_names ?? []);
+  const hasBankDetails = type === 'checking' || type === 'savings';
   const [formError, setFormError] = useState<string | null>(null);
   // Depois de salvar, volta para a lista do grupo (Cartões, Investimentos ou Contas)
   const listPath = group === 'card' ? '/cartoes' : group === 'investment' ? '/investimentos' : '/contas';
@@ -77,6 +83,9 @@ function AccountForm({ account }: { account?: Account }) {
           balance_cents: fromBank ? account!.balance_cents : isCard ? -signed : signed,
           is_active: isActive,
           include_in_total: group === 'bank' ? includeInTotal : false,
+          bank_branch: hasBankDetails && branch.trim() ? branch.trim() : null,
+          bank_account: hasBankDetails && bankAccount.trim() ? bankAccount.trim() : null,
+          card_names: isCard ? cardNames : [],
           yield_note: group === 'investment' && yieldNote.trim() ? yieldNote.trim() : null,
           // Campos de cartão ficam vazios nos outros tipos
           credit_limit_cents: isCard ? limitCents : null,
@@ -103,12 +112,11 @@ function AccountForm({ account }: { account?: Account }) {
         {fromBank ? (
           <p className="text-sm text-muted">O saldo desta conta vem do banco (Open Finance) e é atualizado na sincronização.</p>
         ) : (
-          <Input
+          <MoneyInput
             label={isCard ? 'Valor já gasto e ainda não pago (R$)' : group === 'investment' ? 'Valor guardado hoje (R$)' : 'Saldo inicial (R$)'}
-            inputMode="decimal"
-            placeholder="0,00"
+            allowNegative={group === 'bank'}
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             error={formError ?? undefined}
           />
         )}
@@ -126,29 +134,45 @@ function AccountForm({ account }: { account?: Account }) {
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Dia do fechamento"
-                type="number"
                 inputMode="numeric"
-                min={1}
-                max={31}
+                placeholder="Ex.: 3"
                 required
                 value={closingDay}
-                onChange={(e) => setClosingDay(e.target.value)}
+                onChange={(e) => setClosingDay(maskDay(e.target.value))}
               />
               <Input
                 label="Dia do vencimento"
-                type="number"
                 inputMode="numeric"
-                min={1}
-                max={31}
+                placeholder="Ex.: 10"
                 required
                 value={dueDay}
-                onChange={(e) => setDueDay(e.target.value)}
+                onChange={(e) => setDueDay(maskDay(e.target.value))}
               />
             </div>
             <p className="-mt-2 text-sm text-muted">
               Estão no app do banco ou na fatura. Compras a partir do dia do fechamento entram na fatura seguinte.
             </p>
-            <Input label="Limite (R$, opcional)" inputMode="decimal" placeholder="0,00" value={limit} onChange={(e) => setLimit(e.target.value)} />
+            <MoneyInput label="Limite (R$, opcional)" value={limit} onChange={setLimit} />
+            <CardNamesEditor names={cardNames} onChange={setCardNames} />
+          </div>
+        )}
+
+        {hasBankDetails && (
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Agência (opcional)"
+              inputMode="numeric"
+              placeholder="0001"
+              value={branch}
+              onChange={(e) => setBranch(maskBranch(e.target.value))}
+            />
+            <Input
+              label="Conta (opcional)"
+              inputMode="numeric"
+              placeholder="12345-6"
+              value={bankAccount}
+              onChange={(e) => setBankAccount(maskBankAccount(e.target.value))}
+            />
           </div>
         )}
 
@@ -218,6 +242,77 @@ function AccountForm({ account }: { account?: Account }) {
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * Cartões que usam a mesma fatura: físico, virtual, adicionais do plano família.
+ * Na hora de lançar a compra (ou importar a fatura), escolhe-se qual foi usado.
+ */
+function CardNamesEditor({ names, onChange }: { names: string[]; onChange: (names: string[]) => void }) {
+  const [draft, setDraft] = useState('');
+  const suggestions = ['Físico', 'Virtual'].filter((s) => !names.includes(s));
+
+  function add(name: string) {
+    const clean = name.trim().slice(0, 40);
+    if (!clean || names.some((n) => n.toLowerCase() === clean.toLowerCase())) return;
+    onChange([...names, clean]);
+    setDraft('');
+  }
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-line pt-4">
+      <p className="text-sm font-semibold">Cartões desta fatura (opcional)</p>
+      <p className="-mt-1 text-sm text-muted">Físico, virtual ou adicionais de outras pessoas. Ao lançar uma compra, você escolhe qual foi usado.</p>
+      {names.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {names.map((name) => (
+            <li key={name} className="flex items-center gap-1 rounded-full bg-ground py-1 pr-1 pl-3 text-sm font-semibold">
+              {name}
+              <button
+                type="button"
+                aria-label={`Remover ${name}`}
+                onClick={() => onChange(names.filter((n) => n !== name))}
+                className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <Input
+            label="Nome do cartão"
+            maxLength={40}
+            placeholder="Ex.: Adicional Ana"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                add(draft);
+              }
+            }}
+          />
+        </div>
+        <Button variant="secondary" className="h-13 px-4 text-sm" disabled={!draft.trim()} onClick={() => add(draft)}>
+          Adicionar
+        </Button>
+      </div>
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {suggestions.map((s) => (
+            <button key={s} type="button" onClick={() => add(s)} className="h-11 rounded-full border border-dashed border-line-strong px-4 text-sm font-semibold text-muted">
+              + {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -11,6 +11,7 @@ import { formatMonthYear } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { useInvestments } from '../hooks/useInvestments';
 import { formatRate, type InvestmentSummary } from '../returns';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 // RF-28, RF-29: poupança e caixinhas separadas, com valor aplicado, lucro e rendimento (RN-09)
 export function InvestmentsPage() {
@@ -25,13 +26,13 @@ export function InvestmentsPage() {
     <>
       <PageHeader
         title="Investimentos"
-        backTo="/contas"
         action={
           <Link to="/contas/nova?tipo=investment" className={buttonClasses('primary', 'h-11 shrink-0 px-4 text-sm whitespace-nowrap')}>
             Nova caixinha
           </Link>
         }
       />
+      <SectionTabs section="dinheiro" />
 
       {data && data.length > 0 && (
         <div className="flex flex-col gap-3 rounded-2xl bg-hero p-5 text-on-hero">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MonthSwitcher } from '@/components/ui/MonthSwitcher';
@@ -12,10 +12,16 @@ import { formatDayHeader, monthRange, startOfMonth } from '@/lib/dates';
 import type { TransactionRow, TransactionType } from '../api';
 import { TransactionItem } from '../components/TransactionItem';
 import { useTransactions } from '../hooks/useTransactions';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 // RF-11 a RF-15: lista do mês com busca e filtros, agrupada por dia
 export function TransactionsPage() {
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  // ?mes=aaaa-mm abre direto no mês (ex.: depois de importar um extrato)
+  const [params] = useSearchParams();
+  const [month, setMonth] = useState(() => {
+    const match = /^(\d{4})-(\d{2})$/.exec(params.get('mes') ?? '');
+    return match ? new Date(Number(match[1]), Number(match[2]) - 1, 1) : startOfMonth(new Date());
+  });
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim(), 350);
   const [type, setType] = useState<TransactionType | ''>('');
@@ -43,11 +49,17 @@ export function TransactionsPage() {
       <PageHeader
         title="Transações"
         action={
-          <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
-            Nova transação
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/importar" className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
+              Importar extrato
+            </Link>
+            <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
+              Nova transação
+            </Link>
+          </div>
         }
       />
+      <SectionTabs section="movimentos" />
 
       <MonthSwitcher month={month} onChange={setMonth} />
 
@@ -132,16 +144,6 @@ export function TransactionsPage() {
         </Button>
       )}
 
-      {/* Botão flutuante só no celular */}
-      <Link
-        to="/transacoes/nova"
-        aria-label="Nova transação"
-        className="fixed right-5 bottom-[calc(96px+env(safe-area-inset-bottom))] flex size-15 items-center justify-center rounded-full bg-brand text-on-brand shadow-lg lg:hidden"
-      >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </Link>
     </>
   );
 }

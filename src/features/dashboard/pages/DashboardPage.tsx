@@ -56,7 +56,7 @@ export function DashboardPage() {
   const pending = notDone.filter((o) => o.bill.kind === 'expense');
   // Recebimentos previstos (atrasados ou deste mês)
   const receivables = notDone.filter((o) => o.bill.kind === 'income');
-  const receivableTotal = receivables.reduce((sum, o) => sum + o.bill.amount_cents, 0);
+  const receivableTotal = receivables.reduce((sum, o) => sum + o.amountCents, 0);
   const todayIso = today();
   const monthEnd = monthRange(month).end;
   // Faturas: fechadas/vencidas com saldo, ou que vencem até o fim do mês (RN-02)

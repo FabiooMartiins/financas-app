@@ -25,6 +25,7 @@ export function TransactionItem({ transaction: t, showDate }: { transaction: Tra
         <p className="truncate text-sm text-muted">
           {showDate && `${showDate} · `}
           {subtitle}
+          {t.card_name && ` · ${t.card_name}`}
           {t.source === 'bank' && ' · Banco'}
         </p>
       </div>

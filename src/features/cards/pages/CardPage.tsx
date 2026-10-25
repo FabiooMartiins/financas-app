@@ -22,9 +22,14 @@ export function CardPage() {
 
   const { card, invoices } = entry;
   const editLink = (
-    <Link to={`/contas/${card.id}`} className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
-      Editar
-    </Link>
+    <div className="flex gap-2">
+      <Link to={`/importar?conta=${card.id}`} className={buttonClasses('secondary', 'h-11 px-3 text-sm')}>
+        Importar fatura
+      </Link>
+      <Link to={`/contas/${card.id}`} className={buttonClasses('secondary', 'h-11 px-3 text-sm')}>
+        Editar
+      </Link>
+    </div>
   );
 
   if (!invoices) {
@@ -184,9 +189,11 @@ function InvoiceCard({ invoice, defaultOpen }: { invoice: Invoice; defaultOpen: 
           {invoice.items.length} {invoice.items.length === 1 ? 'lançamento' : 'lançamentos'} · de {formatDate(invoice.startDate)} a{' '}
           {formatDayMonth(previousDay(invoice.closingDate))}
         </summary>
+        {invoice.items.length > 0 && <CardNameTotals invoice={invoice} />}
         {invoice.items.length > 0 ? (
           <ul className="divide-y divide-line">
-            {invoice.items.map((item, index) => (
+            {/* Mais recente primeiro */}
+            {[...invoice.items].reverse().map((item, index) => (
               <li key={item.id ?? `inicial-${index}`}>
                 <ItemRow item={item} />
               </li>
@@ -212,10 +219,17 @@ function InvoiceCard({ invoice, defaultOpen }: { invoice: Invoice; defaultOpen: 
 function ItemRow({ item }: { item: Invoice['items'][number] }) {
   const content = (
     <>
-      <span className="w-12 shrink-0 text-muted">{formatDayMonth(item.occurred_on)}</span>
-      <span className="min-w-0 flex-1 truncate">
-        {item.description}
-        {item.category && <span className="text-muted"> · {item.category.name}</span>}
+      <span
+        className="size-3 shrink-0 rounded-full"
+        style={{ background: item.category?.color ?? 'var(--color-line-strong)' }}
+        aria-hidden="true"
+      />
+      <span className="w-11 shrink-0 text-muted">{formatDayMonth(item.occurred_on)}</span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate">{item.description}</span>
+        {(item.category || item.card_name) && (
+          <span className="truncate text-xs text-muted">{[item.category?.name, item.card_name].filter(Boolean).join(' · ')}</span>
+        )}
       </span>
       <span className={`shrink-0 font-semibold ${item.amount_cents < 0 ? 'text-income' : ''}`}>
         {item.amount_cents < 0 ? `− ${formatCents(-item.amount_cents)}` : formatCents(item.amount_cents)}
@@ -228,6 +242,25 @@ function ItemRow({ item }: { item: Invoice['items'][number] }) {
     </Link>
   ) : (
     <div className="flex min-h-11 items-center gap-2 py-2">{content}</div>
+  );
+}
+
+/** Quanto cada cartão (Físico, Virtual, Adicional…) gastou nesta fatura, quando há mais de um. */
+function CardNameTotals({ invoice }: { invoice: Invoice }) {
+  const totals = new Map<string, number>();
+  for (const item of invoice.items) {
+    const key = item.card_name ?? 'Sem cartão informado';
+    totals.set(key, (totals.get(key) ?? 0) + item.amount_cents);
+  }
+  if (totals.size < 2) return null;
+  return (
+    <ul className="my-2 flex flex-wrap gap-2" aria-label="Total por cartão">
+      {[...totals.entries()].map(([name, cents]) => (
+        <li key={name} className="rounded-full bg-ground px-3 py-1 text-xs font-semibold">
+          {name}: {formatCents(cents)}
+        </li>
+      ))}
+    </ul>
   );
 }
 

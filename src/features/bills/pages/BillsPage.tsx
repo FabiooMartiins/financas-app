@@ -13,6 +13,7 @@ import { formatCents } from '@/lib/money';
 import { BillOccurrenceItem } from '../components/BillOccurrenceItem';
 import { useBillOccurrences } from '../hooks/useBills';
 import type { BillOccurrence } from '../schedule';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 type Tab = 'pagar' | 'receber';
 
@@ -37,7 +38,7 @@ export function BillsPage() {
   const overdue = data?.filter((o) => o.status === 'overdue') ?? [];
   const open = data?.filter((o) => o.status === 'due-soon' || o.status === 'upcoming') ?? [];
   const done = data?.filter((o) => o.status === 'paid') ?? [];
-  const sum = (list: BillOccurrence[]) => list.reduce((s, o) => s + o.bill.amount_cents, 0);
+  const sum = (list: BillOccurrence[]) => list.reduce((s, o) => s + o.amountCents, 0);
 
   return (
     <>
@@ -49,6 +50,7 @@ export function BillsPage() {
           </Link>
         }
       />
+      <SectionTabs section="movimentos" />
       <SegmentedControl
         label="Tipo"
         value={tab}

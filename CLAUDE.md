@@ -55,8 +55,15 @@ Telas novas: Cartões (`/cartoes`, no menu), Investimentos (`/investimentos`), H
 Perfil (`/perfil`, tabela `profiles`). Logos e fotos em buckets privados `logos`/`avatars` (`lib/storage.ts`,
 URLs assinadas). Ajuste de saldo em Editar conta (`AdjustBalanceForm`). Tema em `lib/theme.ts`.
 
+## Ajustes de 25/10/2026, tarde (migração `20261025180000_ajustes_tarde.sql`)
+Navegação: celular com Início · Transações · (+) · Contas · Ajustes (`navItems.tsx`); as telas de cada área
+ficam em abas no topo (`SectionTabs`). Configurações em `/configuracoes`. "Conectar banco" removido.
+Contas do mês: círculo de marcar e valor só de um mês (`bill_amount_overrides`, usado por `pay_bill`).
+Importação OFX/CSV em `/importar` (`features/import`). Cartão: `accounts.card_names` + `transactions.card_name`.
+Máscaras em `lib/masks.ts` e `MoneyInput`; agência/conta em `accounts.bank_branch/bank_account`.
+
 ## Próximos passos
-1. Integração Open Finance (Edge Function `openfinance-sync`) — falta escolher o agregador
+1. Open Finance descartado por enquanto (custo); a entrada de dados é manual ou por importação OFX/CSV
 2. Publicar (Cloudflare Pages) e ajustar Site URL / Redirect URLs no Supabase Auth
 3. Notificações push de vencimento (hoje o lembrete RF-20 aparece dentro do app)
 4. Estimar o rendimento da caixinha pelo CDI do dia (hoje o rendimento entra ao atualizar o saldo)

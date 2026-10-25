@@ -93,3 +93,37 @@ export async function unpayBill(billId: string, referenceMonth: Date) {
   });
   if (error) throw error;
 }
+
+export interface BillAmountOverride {
+  bill_id: string;
+  reference_month: string;
+  amount_cents: number;
+}
+
+/** Valores definidos para meses específicos entre first e last (dia 1 de cada mês) */
+export async function listAmountOverrides(first: Date, last: Date): Promise<BillAmountOverride[]> {
+  const { data, error } = await supabase
+    .from('bill_amount_overrides')
+    .select('bill_id, reference_month, amount_cents')
+    .gte('reference_month', toISODate(first))
+    .lte('reference_month', toISODate(last));
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Valor só deste mês (luz, água…), sem mudar os outros meses nem o valor padrão.
+ * null volta ao valor padrão da conta.
+ */
+export async function setAmountOverride(billId: string, referenceMonth: Date, amountCents: number | null) {
+  const month = toISODate(referenceMonth);
+  if (amountCents === null) {
+    const { error } = await supabase.from('bill_amount_overrides').delete().eq('bill_id', billId).eq('reference_month', month);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase
+    .from('bill_amount_overrides')
+    .upsert({ bill_id: billId, reference_month: month, amount_cents: amountCents }, { onConflict: 'bill_id,reference_month' });
+  if (error) throw error;
+}

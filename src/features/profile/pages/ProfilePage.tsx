@@ -3,15 +3,15 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { centsToInput, parseToCents } from '@/lib/money';
 import { removeImage, uploadImage } from '@/lib/storage';
-import { savedTheme, setTheme, themeLabels, type ThemeChoice } from '@/lib/theme';
+import { maskPhone } from '@/lib/masks';
 import type { Profile } from '../api';
 import { ProfileAvatar } from '../components/ProfileAvatar';
 import { useProfile, useSaveProfile } from '../hooks/useProfile';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 // RF-33 (perfil com foto e dados) e RF-34 (tema)
 export function ProfilePage() {
@@ -33,7 +33,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [occupation, setOccupation] = useState(profile.occupation ?? '');
   const [income, setIncome] = useState(profile.monthly_income_cents != null ? centsToInput(profile.monthly_income_cents) : '');
   const [goal, setGoal] = useState(profile.financial_goal ?? '');
-  const [theme, setThemeChoice] = useState<ThemeChoice>(savedTheme());
   const [formError, setFormError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<unknown>(null);
   const [uploading, setUploading] = useState(false);
@@ -68,11 +67,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
     }
   }
 
-  function changeTheme(next: ThemeChoice) {
-    setThemeChoice(next);
-    setTheme(next); // vale na hora; o perfil guarda para os outros aparelhos
-    save.mutate({ theme: next });
-  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -100,7 +94,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <PageHeader title="Meu perfil" backTo="/contas" />
+      <PageHeader title="Meu perfil" backTo="/configuracoes" />
 
       <Card className="flex flex-col items-center gap-3 p-5">
         <ProfileAvatar size={96} />
@@ -130,27 +124,18 @@ function ProfileForm({ profile }: { profile: Profile }) {
         {photoError !== null && <ErrorState error={photoError} />}
       </Card>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold text-muted">Tema</h2>
-        <SegmentedControl
-          label="Tema do app"
-          value={theme}
-          onChange={changeTheme}
-          options={(['dark', 'light', 'system'] as const).map((value) => ({ value, label: themeLabels[value] }))}
-        />
-      </section>
 
       <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4">
         <h2 className="text-sm font-bold text-muted">Dados pessoais</h2>
         <Input label="Nome completo" maxLength={80} autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         <Input label="Como quer ser chamado" maxLength={30} autoComplete="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Telefone" type="tel" maxLength={20} autoComplete="tel" placeholder="(00) 00000-0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <Input label="Telefone" type="tel" maxLength={20} autoComplete="tel" placeholder="(00) 00000-0000" inputMode="tel" value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} />
           <Input label="Data de nascimento" type="date" autoComplete="bday" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Profissão" maxLength={60} autoComplete="organization-title" value={occupation} onChange={(e) => setOccupation(e.target.value)} />
-          <Input label="Renda mensal (R$, opcional)" inputMode="decimal" placeholder="0,00" value={income} onChange={(e) => setIncome(e.target.value)} error={formError ?? undefined} />
+          <MoneyInput label="Renda mensal (R$, opcional)" value={income} onChange={setIncome} error={formError ?? undefined} />
         </div>
         <Input
           label="Objetivo financeiro"
