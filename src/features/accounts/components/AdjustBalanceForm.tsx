@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { ErrorState } from '@/components/ui/States';
 import { centsToInput, formatCents, parseToCents } from '@/lib/money';
 import { accountGroup, type Account, type AdjustMode } from '../api';
 import { useAdjustBalance } from '../hooks/useAccounts';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 /** RF-30: ajustar o saldo atual informando o saldo real (do app do banco). */
 export function AdjustBalanceForm({ account, onDone }: { account: Account; onDone?: () => void }) {
@@ -47,12 +47,12 @@ export function AdjustBalanceForm({ account, onDone }: { account: Account; onDon
         <span className="text-muted">Saldo no app</span>
         <span className="font-semibold">{formatCents(account.current_balance_cents)}</span>
       </div>
-      <Input
+      <MoneyInput
         label={isInvestment ? 'Saldo de hoje no banco (R$)' : 'Saldo real no banco (R$)'}
-        inputMode="decimal"
+        allowNegative={!isInvestment}
         value={real}
-        onChange={(e) => {
-          setReal(e.target.value);
+        onChange={(value) => {
+          setReal(value);
           setDone(false);
         }}
         error={error ?? undefined}

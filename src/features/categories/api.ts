@@ -21,7 +21,35 @@ export interface CategoryInput {
 }
 
 // Paleta das categorias padrão (tokens do design)
-export const categoryColors = ['#0E6B58', '#2F6FB0', '#D07A2B', '#8A5CB8', '#B4410F', '#C2477E', '#5B8A2E', '#9AA39E'];
+// Paleta das categorias: 24 cores médias, que leem bem nos temas claro e escuro.
+// As 8 primeiras são as originais (categorias padrão já usam essas).
+export const categoryColorNames: [string, string][] = [
+  ['#0E6B58', 'Verde-escuro'],
+  ['#2F6FB0', 'Azul'],
+  ['#D07A2B', 'Laranja'],
+  ['#8A5CB8', 'Roxo'],
+  ['#B4410F', 'Ferrugem'],
+  ['#C2477E', 'Rosa'],
+  ['#5B8A2E', 'Verde-oliva'],
+  ['#9AA39E', 'Cinza'],
+  ['#1F9E89', 'Verde-água'],
+  ['#3BA55C', 'Verde'],
+  ['#8DB33A', 'Lima'],
+  ['#C9A227', 'Mostarda'],
+  ['#E0B33A', 'Amarelo'],
+  ['#E07B53', 'Salmão'],
+  ['#D64545', 'Vermelho'],
+  ['#9E2B4E', 'Vinho'],
+  ['#E26DA6', 'Rosa-claro'],
+  ['#B07CD8', 'Lilás'],
+  ['#5B5FC7', 'Índigo'],
+  ['#1C7FB6', 'Azul-petróleo'],
+  ['#36A3D9', 'Azul-céu'],
+  ['#7A6248', 'Marrom'],
+  ['#A88B6A', 'Areia'],
+  ['#4F5B66', 'Grafite'],
+];
+export const categoryColors = categoryColorNames.map(([hex]) => hex);
 
 // RF-16
 export async function listCategories(): Promise<Category[]> {

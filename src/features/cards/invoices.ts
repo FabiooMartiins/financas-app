@@ -23,6 +23,7 @@ export interface CardMovement {
   account_id: string;
   transfer_account_id: string | null;
   source: 'manual' | 'bank';
+  card_name: string | null;
   category: { name: string; color: string } | null;
 }
 
@@ -34,6 +35,8 @@ export interface InvoiceItem {
   occurred_on: string;
   /** Positivo = compra; negativo = estorno/crédito */
   amount_cents: number;
+  /** Qual dos cartões (Físico, Virtual, Adicional…), quando informado */
+  card_name: string | null;
   category: { name: string; color: string } | null;
 }
 
@@ -103,6 +106,7 @@ export function buildInvoices(card: CardSettings, movements: CardMovement[], tod
       description: 'Em aberto no cadastro do cartão',
       occurred_on: createdOn,
       amount_cents: -card.balance_cents,
+      card_name: null,
       category: null,
     });
   } else if (card.balance_cents > 0) {
@@ -110,7 +114,7 @@ export function buildInvoices(card: CardSettings, movements: CardMovement[], tod
   }
 
   for (const m of movements) {
-    const base = { id: m.id, description: m.description, occurred_on: m.occurred_on, category: m.category };
+    const base = { id: m.id, description: m.description, occurred_on: m.occurred_on, card_name: m.card_name, category: m.category };
     if (m.type === 'transfer' && m.transfer_account_id === card.id) payments += m.amount_cents; // pagamento de fatura
     else if (m.account_id !== card.id) continue;
     else if (m.type === 'expense') addItem(m.occurred_on, { ...base, amount_cents: m.amount_cents });

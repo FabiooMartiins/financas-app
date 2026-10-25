@@ -13,6 +13,7 @@ import { formatDayHeader, formatDayMonth, monthRange, startOfMonth } from '@/lib
 import { formatCents } from '@/lib/money';
 import { balanceEffect, sumEffectsAfter, type TransactionRow } from '../api';
 import { useTransactions } from '../hooks/useTransactions';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 // RF-31: histórico de movimentações de todas as contas, com filtro por conta e,
 // para uma conta escolhida, o saldo depois de cada lançamento.
@@ -58,7 +59,8 @@ export function HistoryPage() {
 
   return (
     <>
-      <PageHeader title="Histórico" backTo="/contas" />
+      <PageHeader title="Por conta" />
+      <SectionTabs section="movimentos" />
 
       <div className="-mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="group" aria-label="Filtrar por conta">
         <div className="flex w-max gap-2">
@@ -139,8 +141,12 @@ function HistoryRow({ t, accountId, byId, balance }: { t: TransactionRow; accoun
       {logoAccount ? <AccountLogo account={logoAccount} size={36} /> : <span className="size-9 shrink-0 rounded-xl bg-ground" aria-hidden="true" />}
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{t.description}</p>
-        <p className="truncate text-sm text-muted">
-          {formatDayMonth(t.occurred_on)} · {where}
+        <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+          {t.category && <span className="size-2.5 shrink-0 rounded-full" style={{ background: t.category.color }} aria-hidden="true" />}
+          <span className="truncate">
+            {formatDayMonth(t.occurred_on)} · {where}
+            {t.card_name && ` · ${t.card_name}`}
+          </span>
         </p>
       </div>
       <div className="shrink-0 text-right">

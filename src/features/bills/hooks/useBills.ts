@@ -1,7 +1,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { addMonths } from '@/lib/dates';
 import { refreshAll } from '@/lib/queryClient';
-import { createBill, deleteBill, listBills, listPayments, payBill, unpayBill, updateBill, type BillInput } from '../api';
+import {
+  createBill,
+  deleteBill,
+  listAmountOverrides,
+  listBills,
+  listPayments,
+  payBill,
+  setAmountOverride,
+  unpayBill,
+  updateBill,
+  type BillInput,
+} from '../api';
 import { occurrencesForMonth, type BillOccurrence } from '../schedule';
 
 export function useBillList() {
@@ -19,16 +30,24 @@ export function useBillOccurrences(month: Date, monthsBack = 0) {
     queryKey: ['bill-payments', first.getTime(), month.getTime()],
     queryFn: () => listPayments(first, month),
   });
+  const overrides = useQuery({
+    queryKey: ['bill-overrides', first.getTime(), month.getTime()],
+    queryFn: () => listAmountOverrides(first, month),
+  });
 
   let data: BillOccurrence[] | undefined;
-  if (bills.data && payments.data) {
+  if (bills.data && payments.data && overrides.data) {
     data = [];
     for (let i = monthsBack; i >= 0; i--) {
-      data.push(...occurrencesForMonth(bills.data, payments.data, addMonths(month, -i)));
+      data.push(...occurrencesForMonth(bills.data, payments.data, addMonths(month, -i), overrides.data));
     }
   }
 
-  return { data, isPending: bills.isPending || payments.isPending, error: bills.error ?? payments.error };
+  return {
+    data,
+    isPending: bills.isPending || payments.isPending || overrides.isPending,
+    error: bills.error ?? payments.error ?? overrides.error,
+  };
 }
 
 export function useSaveBill() {
@@ -55,6 +74,14 @@ export function usePayBill() {
 export function useUnpayBill() {
   return useMutation({
     mutationFn: (v: { billId: string; month: Date }) => unpayBill(v.billId, v.month),
+    onSuccess: refreshAll,
+  });
+}
+
+/** Valor de um mês só (null = volta ao padrão) */
+export function useSetAmountOverride() {
+  return useMutation({
+    mutationFn: (v: { billId: string; month: Date; amountCents: number | null }) => setAmountOverride(v.billId, v.month, v.amountCents),
     onSuccess: refreshAll,
   });
 }

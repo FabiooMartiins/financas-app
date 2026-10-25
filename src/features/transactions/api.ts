@@ -18,7 +18,7 @@ export interface TransactionFilters {
 }
 
 const listColumns =
-  'id, type, nature, amount_cents, description, occurred_on, source, account_id, transfer_account_id, category_id, ' +
+  'id, type, nature, amount_cents, description, occurred_on, source, card_name, account_id, transfer_account_id, category_id, ' +
   'account:accounts!transactions_account_id_fkey(id, name), ' +
   'transfer_account:accounts!transactions_transfer_account_id_fkey(id, name), ' +
   'category:categories(id, name, color)';
@@ -27,6 +27,8 @@ export interface TransactionRow {
   id: string;
   type: TransactionType;
   nature: TransactionNature;
+  /** Cartão de crédito: qual dos cartões (Físico, Virtual, Adicional…) */
+  card_name: string | null;
   amount_cents: number;
   description: string;
   occurred_on: string;
@@ -76,6 +78,7 @@ export interface TransactionInput {
   transfer_account_id: string | null;
   category_id: string | null;
   nature?: TransactionNature;
+  card_name?: string | null;
 }
 
 export async function createTransaction(input: TransactionInput) {

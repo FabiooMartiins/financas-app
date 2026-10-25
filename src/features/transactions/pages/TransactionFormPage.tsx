@@ -17,6 +17,7 @@ import { centsToInput, formatCents, parseToCents } from '@/lib/money';
 import { refreshAll } from '@/lib/queryClient';
 import type { TransactionInput, TransactionRow, TransactionType } from '../api';
 import { useCreateTransaction, useDeleteTransaction, useTransaction, useUpdateTransaction } from '../hooks/useTransactions';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 type Repeat = 'once' | 'installments' | 'monthly';
 
@@ -72,6 +73,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   const [chosenAccount, setAccountId] = useState(transaction?.account_id ?? params.get('origem') ?? '');
   const [chosenTarget, setTargetId] = useState(transaction?.transfer_account_id ?? params.get('destino') ?? '');
   const [categoryId, setCategoryId] = useState(transaction?.category_id ?? '');
+  const [cardName, setCardName] = useState(transaction?.card_name ?? '');
   const [repeat, setRepeat] = useState<Repeat>('once');
   const [installments, setInstallments] = useState('2');
   const [amountError, setAmountError] = useState<string | null>(null);
@@ -80,6 +82,7 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   const accountId = chosenAccount || (chosenTarget ? active.find((a) => a.id !== chosenTarget)?.id : active[0]?.id) || '';
   const targetId = chosenTarget || active.find((a) => a.id !== accountId)?.id || '';
   const kindCategories = categories?.filter((c) => c.kind === type) ?? [];
+  const selectedAccount = active.find((a) => a.id === accountId);
   const cents = parseToCents(amount);
   const nInstallments = Number(installments);
 
@@ -137,6 +140,8 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
       account_id: accountId,
       transfer_account_id: type === 'transfer' ? targetId : null,
       category_id: type === 'transfer' ? null : categoryId || null, // RN-01: transferência não tem categoria
+      // Cartão com vários cartões (físico, virtual, adicional): qual foi usado
+      card_name: type !== 'transfer' && selectedAccount?.type === 'credit_card' && cardName ? cardName : null,
     };
 
     const done = { onSuccess: () => navigate('/transacoes') };
@@ -167,14 +172,12 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
           ]}
         />
 
-        <Input
+        <MoneyInput
           label={repeat === 'installments' ? 'Valor total da compra (R$)' : 'Valor (R$)'}
           required
-          inputMode="decimal"
-          placeholder="0,00"
           disabled={fromBank}
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={setAmount}
           error={amountError ?? undefined}
           autoFocus={!isEdit}
         />
@@ -208,7 +211,17 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
               accounts={active}
               disabled={fromBank}
             />
-            <CardInvoiceHint account={active.find((a) => a.id === accountId)} date={date} type={type} />
+            {selectedAccount?.type === 'credit_card' && selectedAccount.card_names.length > 0 && (
+              <Select label="Qual cartão" value={cardName} disabled={fromBank} onChange={(e) => setCardName(e.target.value)}>
+                <option value="">Não informar</option>
+                {selectedAccount.card_names.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </Select>
+            )}
+            <CardInvoiceHint account={selectedAccount} date={date} type={type} />
             <Select label="Categoria" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">Sem categoria</option>
               {kindCategories.map((c) => (

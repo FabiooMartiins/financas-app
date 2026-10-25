@@ -9,6 +9,7 @@ import { useCreateTransaction } from '@/features/transactions/hooks/useTransacti
 import { daysBetween, formatDayMonth, formatMonthYear, parseISODate, today } from '@/lib/dates';
 import { centsToInput, formatCents, parseToCents } from '@/lib/money';
 import { invoiceStatusLabels, type Invoice, type InvoiceStatus } from '../invoices';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 const badgeColors: Record<InvoiceStatus, string> = {
   future: 'bg-ground text-muted',
@@ -121,7 +122,7 @@ export function PayInvoiceForm({ invoice, onDone }: { invoice: Invoice; onDone: 
             </option>
           ))}
         </Select>
-        <Input label="Valor (R$)" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} error={error ?? undefined} />
+        <MoneyInput label="Valor (R$)" value={amount} onChange={setAmount} error={error ?? undefined} />
         <Input label="Data" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
       <p className="text-sm text-muted">Pode pagar só uma parte: o restante continua em aberto. O pagamento não conta como despesa.</p>

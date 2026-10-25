@@ -49,6 +49,11 @@ export interface Account {
   logo_path: string | null;
   include_in_total: boolean;
   yield_note: string | null;
+  /** Conta bancária: agência e número (só exibição) */
+  bank_branch: string | null;
+  bank_account: string | null;
+  /** Cartão: cartões que usam esta fatura (Físico, Virtual, Adicional…) */
+  card_names: string[];
   // Só cartão de crédito
   credit_limit_cents: number | null;
   closing_day: number | null;
@@ -62,6 +67,9 @@ export interface AccountInput {
   is_active: boolean;
   include_in_total?: boolean;
   yield_note?: string | null;
+  bank_branch?: string | null;
+  bank_account?: string | null;
+  card_names?: string[];
   credit_limit_cents?: number | null;
   closing_day?: number | null;
   due_day?: number | null;
@@ -72,7 +80,7 @@ export async function listAccounts(): Promise<Account[]> {
   const [accounts, balances] = await Promise.all([
     supabase
       .from('accounts')
-      .select('id, name, type, balance_cents, is_active, connection_id, created_at, credit_limit_cents, closing_day, due_day, logo_path, include_in_total, yield_note, connection:bank_connections(institution_name)')
+      .select('id, name, type, balance_cents, is_active, connection_id, created_at, credit_limit_cents, closing_day, due_day, logo_path, include_in_total, yield_note, bank_branch, bank_account, card_names, connection:bank_connections(institution_name)')
       .order('name'),
     supabase.from('account_balances').select('account_id, current_balance_cents'),
   ]);
@@ -93,6 +101,9 @@ export async function listAccounts(): Promise<Account[]> {
     logo_path: a.logo_path,
     include_in_total: a.include_in_total,
     yield_note: a.yield_note,
+    bank_branch: a.bank_branch,
+    bank_account: a.bank_account,
+    card_names: a.card_names ?? [],
     credit_limit_cents: a.credit_limit_cents,
     closing_day: a.closing_day,
     due_day: a.due_day,

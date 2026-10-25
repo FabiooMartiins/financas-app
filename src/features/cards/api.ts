@@ -10,7 +10,7 @@ export async function listCardMovements(cardIds: string[]): Promise<CardMovement
   for (let page = 0; ; page++) {
     const { data, error } = await supabase
       .from('transactions')
-      .select('id, type, amount_cents, occurred_on, description, account_id, transfer_account_id, source, category:categories(name, color)')
+      .select('id, type, amount_cents, occurred_on, description, account_id, transfer_account_id, source, card_name, category:categories(name, color)')
       .or(`account_id.in.(${ids}),transfer_account_id.in.(${ids})`)
       .order('occurred_on')
       .order('created_at')

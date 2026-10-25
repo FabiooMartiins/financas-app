@@ -13,6 +13,7 @@ import { today } from '@/lib/dates';
 import { centsToInput, parseToCents } from '@/lib/money';
 import type { Bill, BillFrequency, BillKind } from '../api';
 import { useBillList, useDeleteBill, useSaveBill } from '../hooks/useBills';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 
 // RF-17 (recorrente), RF-20 (lembrete), RF-21 (parcelada) e recebimentos previstos
 export function BillFormPage() {
@@ -100,13 +101,11 @@ function BillForm({ bill, kind }: { bill?: Bill; kind: BillKind }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <Input
+        <MoneyInput
           label={hasInstallments && frequency === 'monthly' ? 'Valor da parcela (R$)' : 'Valor (R$)'}
           required
-          inputMode="decimal"
-          placeholder="0,00"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={setAmount}
           error={amountError ?? undefined}
         />
 

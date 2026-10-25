@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AccountFormPage } from '@/features/accounts/pages/AccountFormPage';
 import { AccountsPage } from '@/features/accounts/pages/AccountsPage';
-import { ConnectBankPage } from '@/features/accounts/pages/ConnectBankPage';
 import { RequireAuth } from '@/features/auth/components/RequireAuth';
 import { ChangePasswordPage } from '@/features/auth/pages/ChangePasswordPage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
@@ -14,6 +13,8 @@ import { CategoriesPage } from '@/features/categories/pages/CategoriesPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { InvestmentsPage } from '@/features/investments/pages/InvestmentsPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
+import { SettingsPage } from '@/features/settings/pages/SettingsPage';
+import { ImportPage } from '@/features/import/pages/ImportPage';
 import { HistoryPage } from '@/features/transactions/pages/HistoryPage';
 import { TransactionFormPage } from '@/features/transactions/pages/TransactionFormPage';
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage';
@@ -44,8 +45,9 @@ export const router = createBrowserRouter([
       { path: 'investimentos', element: <InvestmentsPage /> },
       { path: 'historico', element: <HistoryPage /> },
       { path: 'perfil', element: <ProfilePage /> },
+      { path: 'configuracoes', element: <SettingsPage /> },
+      { path: 'importar', element: <ImportPage /> },
       { path: 'categorias', element: <CategoriesPage /> },
-      { path: 'conectar-banco', element: <ConnectBankPage /> },
       { path: 'alterar-senha', element: <ChangePasswordPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

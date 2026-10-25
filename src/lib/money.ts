@@ -28,7 +28,9 @@ export function parseToCents(input: string): number | null {
   return Number.isFinite(value) ? Math.round(value * 100) : null;
 }
 
-/** 123456 -> "1234,56" (para preencher campos de edição) */
+/** 123456 -> "1.234,56" (para preencher campos de edição, no mesmo formato da máscara) */
 export function centsToInput(cents: number): string {
-  return (cents / 100).toFixed(2).replace('.', ',');
+  const sign = cents < 0 ? '-' : '';
+  const [integer, decimals] = (Math.abs(cents) / 100).toFixed(2).split('.');
+  return `${sign}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${decimals}`;
 }

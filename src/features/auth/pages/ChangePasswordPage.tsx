@@ -30,7 +30,7 @@ export function ChangePasswordPage() {
 
   return (
     <>
-      <PageHeader title="Alterar senha" backTo="/contas" />
+      <PageHeader title="Alterar senha" backTo="/configuracoes" />
       {done ? (
         <div className="flex max-w-lg flex-col gap-4">
           <p role="status" className="font-semibold text-brand">

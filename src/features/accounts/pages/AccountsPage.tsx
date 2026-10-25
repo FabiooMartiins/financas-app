@@ -4,13 +4,13 @@ import { buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useBillOccurrences } from '@/features/bills/hooks/useBills';
 import { startOfMonth } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { accountGroup, accountTypeLabels, totalBalance, type Account, type AccountGroup } from '../api';
 import { AccountLogo } from '../components/AccountLogo';
 import { useAccounts } from '../hooks/useAccounts';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 const groupTitles: Record<AccountGroup, string> = {
   bank: 'Contas bancárias e carteira',
@@ -20,7 +20,6 @@ const groupTitles: Record<AccountGroup, string> = {
 
 // RF-04 a RF-10, RF-27, RF-28: contas separadas em três grupos; saldo total só das bancárias (RN-07)
 export function AccountsPage() {
-  const { session, signOut } = useAuth();
   const { data: accounts, isPending, error } = useAccounts();
   const [month] = useState(() => startOfMonth(new Date()));
   const occurrences = useBillOccurrences(month);
@@ -28,7 +27,7 @@ export function AccountsPage() {
   const incoming = new Map<string, number>();
   for (const o of occurrences.data ?? []) {
     if (o.bill.kind !== 'income' || o.status === 'paid' || !o.bill.account_id) continue;
-    incoming.set(o.bill.account_id, (incoming.get(o.bill.account_id) ?? 0) + o.bill.amount_cents);
+    incoming.set(o.bill.account_id, (incoming.get(o.bill.account_id) ?? 0) + o.amountCents);
   }
 
   const active = accounts?.filter((a) => a.is_active) ?? [];
@@ -47,6 +46,7 @@ export function AccountsPage() {
           </Link>
         }
       />
+      <SectionTabs section="dinheiro" />
 
       <div className="rounded-2xl bg-brand p-5 text-on-brand">
         <p className="text-sm font-semibold">Saldo total em contas</p>
@@ -86,19 +86,6 @@ export function AccountsPage() {
         </GroupSection>
       )}
 
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold text-muted">Mais</h2>
-        <Card className="divide-y divide-line">
-          <MenuLink to="/perfil" label="Meu perfil" hint="Foto, dados pessoais e tema" />
-          <MenuLink to="/historico" label="Histórico de movimentações" hint="Todas as contas juntas" />
-          <MenuLink to="/categorias" label="Categorias" hint="Organize receitas e despesas" />
-          <MenuLink to="/conectar-banco" label="Conectar banco" hint="Open Finance — importação automática" />
-          <MenuLink to="/alterar-senha" label="Alterar senha" hint={session?.user.email ?? ''} />
-        </Card>
-        <button type="button" onClick={signOut} className="h-11 self-start rounded-xl px-1 text-sm font-semibold text-muted underline">
-          Sair
-        </button>
-      </section>
     </>
   );
 }
@@ -137,11 +124,13 @@ function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Ma
                 {/* O grupo já diz o tipo; aqui vai o que muda de conta para conta */}
                 {isCard
                   ? account.due_day
-                    ? `Vence dia ${account.due_day}`
+                    ? `Vence dia ${account.due_day}${account.card_names.length > 1 ? ` · ${account.card_names.length} cartões` : ''}`
                     : 'Configurar fatura'
                   : account.yield_note
                     ? `Rende ${account.yield_note}`
-                    : accountTypeLabels[account.type]}
+                    : account.bank_branch || account.bank_account
+                      ? [account.bank_branch && `Ag ${account.bank_branch}`, account.bank_account && `Conta ${account.bank_account}`].filter(Boolean).join(' · ')
+                      : accountTypeLabels[account.type]}
                 {account.fromBank && ` · ${account.institution ?? 'Banco'}`}
                 {accountGroup(account.type) === 'bank' && !account.include_in_total && ' · fora do saldo total'}
               </p>
@@ -158,19 +147,5 @@ function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Ma
         );
       })}
     </Card>
-  );
-}
-
-function MenuLink({ to, label, hint }: { to: string; label: string; hint: string }) {
-  return (
-    <Link to={to} className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 hover:bg-ground">
-      <div className="min-w-0">
-        <p className="font-semibold">{label}</p>
-        <p className="truncate text-sm text-muted">{hint}</p>
-      </div>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-muted" aria-hidden="true">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
-    </Link>
   );
 }

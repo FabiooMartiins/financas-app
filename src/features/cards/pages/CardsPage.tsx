@@ -7,6 +7,7 @@ import { AccountLogo } from '@/features/accounts/components/AccountLogo';
 import { formatCents } from '@/lib/money';
 import { InvoiceBadge, describeInvoiceDue, invoiceAmount, invoiceTitle } from '../components/InvoiceParts';
 import { useCards, type CardWithInvoices } from '../hooks/useCards';
+import { SectionTabs } from '@/components/layout/SectionTabs';
 
 // RF-27: todos os cartões em um lugar — fatura atual, faturas a pagar e limite de cada um
 export function CardsPage() {
@@ -27,6 +28,7 @@ export function CardsPage() {
           </Link>
         }
       />
+      <SectionTabs section="dinheiro" />
 
       {data && data.length > 0 && (
         <div className="grid grid-cols-2 gap-3">

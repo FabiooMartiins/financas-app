@@ -1,6 +1,6 @@
 // Em quais meses cada conta (a pagar ou a receber) aparece, quando vence e qual a situação — RF-17 a RF-21, RN-04.
 import { daysBetween, daysInMonth, parseISODate, toISODate, today } from '@/lib/dates';
-import type { Bill, BillPayment } from './api';
+import type { Bill, BillAmountOverride, BillPayment } from './api';
 
 export type BillStatus = 'paid' | 'overdue' | 'due-soon' | 'upcoming';
 
@@ -11,6 +11,10 @@ export interface BillOccurrence {
   /** "3/10" quando parcelada (RF-21) */
   installment: string | null;
   payment: BillPayment | null;
+  /** Valor deste mês: o valor definido só para ele ou o valor padrão da conta */
+  amountCents: number;
+  /** true quando este mês tem um valor próprio (ex.: luz e água variam todo mês) */
+  customAmount: boolean;
   status: BillStatus;
   /** Dias até o vencimento (negativo = atrasada) */
   daysLeft: number;
@@ -41,7 +45,7 @@ export function dueDateIn(bill: Bill, month: Date): string {
   return toISODate(new Date(month.getFullYear(), month.getMonth(), day));
 }
 
-export function occurrencesForMonth(bills: Bill[], payments: BillPayment[], month: Date): BillOccurrence[] {
+export function occurrencesForMonth(bills: Bill[], payments: BillPayment[], month: Date, overrides: BillAmountOverride[] = []): BillOccurrence[] {
   const todayIso = today();
   const monthIso = toISODate(month);
   const result: BillOccurrence[] = [];
@@ -52,6 +56,7 @@ export function occurrencesForMonth(bills: Bill[], payments: BillPayment[], mont
     const dueDate = dueDateIn(bill, month);
     const payment = payments.find((p) => p.bill_id === bill.id && p.reference_month === monthIso) ?? null;
     const daysLeft = daysBetween(todayIso, dueDate);
+    const override = overrides.find((v) => v.bill_id === bill.id && v.reference_month === monthIso);
 
     let status: BillStatus;
     if (payment) status = 'paid';
@@ -65,6 +70,8 @@ export function occurrencesForMonth(bills: Bill[], payments: BillPayment[], mont
       dueDate,
       installment: bill.installments_total !== null ? `${n}/${bill.installments_total}` : null,
       payment,
+      amountCents: override?.amount_cents ?? bill.amount_cents,
+      customAmount: !!override,
       status,
       daysLeft,
     });
