@@ -6,7 +6,7 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-8 border-r border-line bg-surface p-6 lg:flex">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-brand font-display text-sm font-bold text-white">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-brand font-display text-sm font-bold text-on-brand">
           R$
         </div>
         <span className="font-display text-lg font-semibold">Finanças</span>

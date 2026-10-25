@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ConfirmButton } from '@/components/ui/ConfirmButton';
 import { Input } from '@/components/ui/Input';
@@ -7,10 +7,13 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { ErrorState, LoadingState } from '@/components/ui/States';
 import { centsToInput, parseToCents } from '@/lib/money';
-import { accountTypeLabels, type Account, type AccountType } from '../api';
+import { accountGroup, accountTypeLabels, type Account, type AccountType } from '../api';
+import { AdjustBalanceForm } from '../components/AdjustBalanceForm';
+import { LogoPicker } from '../components/LogoPicker';
 import { useAccounts, useDeleteAccount, useSaveAccount } from '../hooks/useAccounts';
 
-// RF-04: cadastro e edição de contas manuais
+// RF-04: cadastro e edição de contas (bancárias, cartões e investimentos)
+// RF-30 ajuste de saldo, RF-32 logo, RN-07 entrar ou não no saldo total
 export function AccountFormPage() {
   const { id } = useParams();
   const { data: accounts, isPending } = useAccounts();
@@ -24,11 +27,13 @@ export function AccountFormPage() {
 
 function AccountForm({ account }: { account?: Account }) {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const save = useSaveAccount();
   const remove = useDeleteAccount();
 
   const [name, setName] = useState(account?.name ?? '');
-  const [type, setType] = useState<AccountType>(account?.type ?? 'checking');
+  const [type, setType] = useState<AccountType>(account?.type ?? initialType(params.get('tipo')));
+  const group = accountGroup(type);
   const isCard = type === 'credit_card';
   // Cartão: o usuário informa a fatura em aberto (positivo) e guardamos como saldo negativo
   const [amount, setAmount] = useState(() => {
@@ -40,7 +45,11 @@ function AccountForm({ account }: { account?: Account }) {
   const [limit, setLimit] = useState(account?.credit_limit_cents != null ? centsToInput(account.credit_limit_cents) : '');
   const [closingDay, setClosingDay] = useState(String(account?.closing_day ?? ''));
   const [dueDay, setDueDay] = useState(String(account?.due_day ?? ''));
+  const [includeInTotal, setIncludeInTotal] = useState(account?.include_in_total ?? true);
+  const [yieldNote, setYieldNote] = useState(account?.yield_note ?? '');
   const [formError, setFormError] = useState<string | null>(null);
+  // Depois de salvar, volta para a lista do grupo (Cartões, Investimentos ou Contas)
+  const listPath = group === 'card' ? '/cartoes' : group === 'investment' ? '/investimentos' : '/contas';
 
   const fromBank = account?.fromBank ?? false;
 
@@ -67,21 +76,23 @@ function AccountForm({ account }: { account?: Account }) {
           type,
           balance_cents: fromBank ? account!.balance_cents : isCard ? -signed : signed,
           is_active: isActive,
+          include_in_total: group === 'bank' ? includeInTotal : false,
+          yield_note: group === 'investment' && yieldNote.trim() ? yieldNote.trim() : null,
           // Campos de cartão ficam vazios nos outros tipos
           credit_limit_cents: isCard ? limitCents : null,
           closing_day: isCard ? Number(closingDay) : null,
           due_day: isCard ? Number(dueDay) : null,
         },
       },
-      { onSuccess: () => navigate('/contas') },
+      { onSuccess: () => navigate(listPath) },
     );
   }
 
   return (
     <>
-      <PageHeader title={account ? 'Editar conta' : 'Nova conta'} backTo="/contas" />
+      <PageHeader title={account ? 'Editar conta' : 'Nova conta'} backTo={account?.type === 'credit_card' ? `/cartoes/${account.id}` : listPath} />
       <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4">
-        <Input label="Nome" required maxLength={60} placeholder="Ex.: Nubank, Itaú, Carteira" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input label="Nome" required maxLength={60} placeholder="Ex.: Nubank, Itaú, Caixinha viagem" value={name} onChange={(e) => setName(e.target.value)} />
         <Select label="Tipo" value={type} disabled={fromBank} onChange={(e) => setType(e.target.value as AccountType)}>
           {Object.entries(accountTypeLabels).map(([value, label]) => (
             <option key={value} value={value}>
@@ -93,7 +104,7 @@ function AccountForm({ account }: { account?: Account }) {
           <p className="text-sm text-muted">O saldo desta conta vem do banco (Open Finance) e é atualizado na sincronização.</p>
         ) : (
           <Input
-            label={isCard ? 'Valor já gasto e ainda não pago (R$)' : 'Saldo inicial (R$)'}
+            label={isCard ? 'Valor já gasto e ainda não pago (R$)' : group === 'investment' ? 'Valor guardado hoje (R$)' : 'Saldo inicial (R$)'}
             inputMode="decimal"
             placeholder="0,00"
             value={amount}
@@ -104,7 +115,9 @@ function AccountForm({ account }: { account?: Account }) {
         <p className="-mt-2 text-sm text-muted">
           {isCard
             ? 'Quanto você deve hoje no cartão (fatura fechada não paga + compras da fatura atual). Esse valor entra na próxima fatura a vencer. Parcelas futuras, lance como compra parcelada. O pagamento da fatura é uma transferência para o cartão.'
-            : 'O saldo atual é este valor somado às transações lançadas. Use "-" na frente para saldo negativo.'}
+            : group === 'investment'
+              ? 'Conta como valor aplicado. Daqui em diante, o lucro é o que o saldo crescer além do que você guardar ou resgatar.'
+              : 'O saldo atual é este valor somado às transações lançadas. Use "-" na frente para saldo negativo.'}
         </p>
 
         {isCard && (
@@ -139,6 +152,28 @@ function AccountForm({ account }: { account?: Account }) {
           </div>
         )}
 
+        {group === 'bank' && (
+          <label className="flex min-h-11 items-center gap-3 font-semibold">
+            <input type="checkbox" className="size-5 accent-brand" checked={includeInTotal} onChange={(e) => setIncludeInTotal(e.target.checked)} />
+            Somar no saldo total
+          </label>
+        )}
+        {group !== 'bank' && (
+          <p className="-mt-2 text-sm text-muted">
+            {group === 'card' ? 'Cartões' : 'Poupança e caixinhas'} não entram no saldo total: aparecem em{' '}
+            {group === 'card' ? 'Cartões' : 'Investimentos'}, com {group === 'card' ? 'faturas e limite' : 'rendimento e lucro'}.
+          </p>
+        )}
+        {group === 'investment' && (
+          <Input
+            label="Rendimento combinado (opcional)"
+            maxLength={40}
+            placeholder="Ex.: 100% do CDI"
+            value={yieldNote}
+            onChange={(e) => setYieldNote(e.target.value)}
+          />
+        )}
+
         {account && (
           <label className="flex min-h-11 items-center gap-3 font-semibold">
             <input type="checkbox" className="size-5 accent-brand" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
@@ -150,6 +185,23 @@ function AccountForm({ account }: { account?: Account }) {
         <Button type="submit" disabled={save.isPending}>
           {save.isPending ? 'Salvando…' : 'Salvar'}
         </Button>
+      </form>
+
+      {/* Fora do <form>: Enter no campo de saldo não salva a conta inteira */}
+      <div className="flex max-w-lg flex-col gap-4">
+        {account && (
+          <section className="mt-4 flex flex-col gap-3 border-t border-line pt-4">
+            <h2 className="font-display font-semibold">Logo</h2>
+            <LogoPicker account={account} />
+          </section>
+        )}
+
+        {account && account.type !== 'credit_card' && (
+          <section className="flex flex-col gap-3 border-t border-line pt-4">
+            <h2 className="font-display font-semibold">Ajustar saldo atual</h2>
+            <AdjustBalanceForm account={account} />
+          </section>
+        )}
 
         {account && (
           <div className="mt-4 flex flex-col gap-2 border-t border-line pt-4">
@@ -158,15 +210,19 @@ function AccountForm({ account }: { account?: Account }) {
             <ConfirmButton
               confirmLabel="Excluir com transações"
               disabled={remove.isPending}
-              onConfirm={() => remove.mutate(account.id, { onSuccess: () => navigate('/contas') })}
+              onConfirm={() => remove.mutate(account.id, { onSuccess: () => navigate(listPath) })}
             >
               Excluir conta
             </ConfirmButton>
           </div>
         )}
-      </form>
+      </div>
     </>
   );
+}
+
+function initialType(value: string | null): AccountType {
+  return value !== null && value in accountTypeLabels ? (value as AccountType) : 'checking';
 }
 
 function isCardType(type: AccountType) {

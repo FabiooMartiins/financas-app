@@ -14,7 +14,7 @@ import { describeDue, type BillOccurrence, type BillStatus } from '../schedule';
 const badge: Record<BillStatus, string> = {
   paid: 'bg-brand/10 text-brand',
   overdue: 'bg-expense-soft text-expense',
-  'due-soon': 'bg-[#FFF4DC] text-[#8A5A00]',
+  'due-soon': 'bg-warn-soft text-warn',
   upcoming: 'bg-ground text-muted',
 };
 

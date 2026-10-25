@@ -9,8 +9,12 @@ import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { BillFormPage } from '@/features/bills/pages/BillFormPage';
 import { BillsPage } from '@/features/bills/pages/BillsPage';
 import { CardPage } from '@/features/cards/pages/CardPage';
+import { CardsPage } from '@/features/cards/pages/CardsPage';
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { InvestmentsPage } from '@/features/investments/pages/InvestmentsPage';
+import { ProfilePage } from '@/features/profile/pages/ProfilePage';
+import { HistoryPage } from '@/features/transactions/pages/HistoryPage';
 import { TransactionFormPage } from '@/features/transactions/pages/TransactionFormPage';
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage';
 
@@ -35,7 +39,11 @@ export const router = createBrowserRouter([
       { path: 'contas', element: <AccountsPage /> },
       { path: 'contas/nova', element: <AccountFormPage /> },
       { path: 'contas/:id', element: <AccountFormPage /> },
+      { path: 'cartoes', element: <CardsPage /> },
       { path: 'cartoes/:id', element: <CardPage /> },
+      { path: 'investimentos', element: <InvestmentsPage /> },
+      { path: 'historico', element: <HistoryPage /> },
+      { path: 'perfil', element: <ProfilePage /> },
       { path: 'categorias', element: <CategoriesPage /> },
       { path: 'conectar-banco', element: <ConnectBankPage /> },
       { path: 'alterar-senha', element: <ChangePasswordPage /> },

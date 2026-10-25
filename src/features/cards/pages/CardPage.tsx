@@ -30,7 +30,7 @@ export function CardPage() {
   if (!invoices) {
     return (
       <>
-        <PageHeader title={card.name} backTo="/contas" action={editLink} />
+        <PageHeader title={card.name} backTo="/cartoes" action={editLink} />
         <EmptyState>
           Informe o dia de fechamento e o dia de vencimento do cartão para acompanhar as faturas.{' '}
           <Link to={`/contas/${card.id}`} className="font-semibold text-brand underline">
@@ -53,9 +53,9 @@ export function CardPage() {
 
   return (
     <>
-      <PageHeader title={card.name} backTo="/contas" action={editLink} />
+      <PageHeader title={card.name} backTo="/cartoes" action={editLink} />
 
-      <div className="flex flex-col gap-3 rounded-2xl bg-ink p-5 text-white">
+      <div className="flex flex-col gap-3 rounded-2xl bg-hero p-5 text-on-hero">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold opacity-80">{available !== null ? 'Limite disponível' : 'Total em aberto'}</p>
@@ -70,14 +70,14 @@ export function CardPage() {
         {limit !== null && (
           <>
             <div
-              className="h-2 rounded-full bg-white/20"
+              className="h-2 rounded-full bg-on-hero/20"
               role="meter"
               aria-label="Limite usado"
               aria-valuemin={0}
               aria-valuemax={limit}
               aria-valuenow={debt}
             >
-              <div className="h-2 rounded-full bg-white" style={{ width: `${usedShare * 100}%` }} />
+              <div className="h-2 rounded-full bg-on-hero" style={{ width: `${usedShare * 100}%` }} />
             </div>
             <p className="text-sm opacity-80">
               Usado {formatCents(debt)} de {formatCents(limit)} (inclui parcelas futuras)

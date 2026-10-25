@@ -3,6 +3,8 @@ import { addMonthsKeepDay } from '@/lib/dates';
 import type { Database } from '@/types/database';
 
 export type TransactionType = Database['public']['Enums']['transaction_type'];
+/** RN-10: 'adjustment' (ajuste de saldo) e 'yield' (rendimento) não contam como receita/despesa */
+export type TransactionNature = Database['public']['Enums']['transaction_nature'];
 
 export const PAGE_SIZE = 50; // RNF-08: paginação
 
@@ -16,7 +18,7 @@ export interface TransactionFilters {
 }
 
 const listColumns =
-  'id, type, amount_cents, description, occurred_on, source, account_id, transfer_account_id, category_id, ' +
+  'id, type, nature, amount_cents, description, occurred_on, source, account_id, transfer_account_id, category_id, ' +
   'account:accounts!transactions_account_id_fkey(id, name), ' +
   'transfer_account:accounts!transactions_transfer_account_id_fkey(id, name), ' +
   'category:categories(id, name, color)';
@@ -24,6 +26,7 @@ const listColumns =
 export interface TransactionRow {
   id: string;
   type: TransactionType;
+  nature: TransactionNature;
   amount_cents: number;
   description: string;
   occurred_on: string;
@@ -72,6 +75,7 @@ export interface TransactionInput {
   account_id: string;
   transfer_account_id: string | null;
   category_id: string | null;
+  nature?: TransactionNature;
 }
 
 export async function createTransaction(input: TransactionInput) {
@@ -106,4 +110,35 @@ export async function updateTransaction(id: string, input: Partial<TransactionIn
 export async function deleteTransaction(id: string) {
   const { error } = await supabase.from('transactions').delete().eq('id', id);
   if (error) throw error;
+}
+
+/** Efeito de uma transação no saldo de uma conta (+ entra, − sai, 0 não mexe). */
+export function balanceEffect(t: Pick<TransactionRow, 'type' | 'amount_cents' | 'account_id' | 'transfer_account_id'>, accountId: string): number {
+  if (t.type === 'transfer') {
+    if (t.transfer_account_id === accountId) return t.amount_cents;
+    if (t.account_id === accountId) return -t.amount_cents;
+    return 0;
+  }
+  if (t.account_id !== accountId) return 0;
+  return t.type === 'income' ? t.amount_cents : -t.amount_cents;
+}
+
+/**
+ * RF-31: soma do que entrou/saiu de uma conta DEPOIS de `afterDate` — com o saldo
+ * atual, dá o saldo no fim do período mostrado no histórico.
+ */
+export async function sumEffectsAfter(accountId: string, afterDate: string): Promise<number> {
+  let total = 0;
+  const pageSize = 1000;
+  for (let page = 0; ; page++) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('type, amount_cents, account_id, transfer_account_id')
+      .or(`account_id.eq.${accountId},transfer_account_id.eq.${accountId}`)
+      .gt('occurred_on', afterDate)
+      .range(page * pageSize, page * pageSize + pageSize - 1);
+    if (error) throw error;
+    for (const t of data) total += balanceEffect(t, accountId);
+    if (data.length < pageSize) return total;
+  }
 }

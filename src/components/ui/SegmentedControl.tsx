@@ -30,7 +30,7 @@ export function SegmentedControl<T extends string>({
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={`h-11 flex-1 rounded-xl px-2 text-sm font-bold disabled:opacity-60 ${
-              selected ? 'bg-brand text-white' : 'text-muted hover:bg-ground'
+              selected ? 'bg-brand text-on-brand' : 'text-muted hover:bg-ground'
             }`}
           >
             {option.label}

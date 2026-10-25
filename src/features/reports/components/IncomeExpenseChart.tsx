@@ -5,8 +5,8 @@ import type { MonthTotals } from '../api';
 
 // Verde validado para marcas de gráfico (o #0E6B58 da marca fica acinzentado
 // demais como preenchimento); despesa usa o mesmo laranja da interface.
-const INCOME = '#00775A';
-const EXPENSE = '#B4410F';
+const INCOME = 'var(--color-chart-income)';
+const EXPENSE = 'var(--color-chart-expense)';
 
 const compact = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
 
@@ -27,16 +27,16 @@ export function IncomeExpenseChart({ data }: { data: MonthTotals[] }) {
       <div className="h-60" role="img" aria-label="Gráfico de receitas e despesas por mês. Os valores estão na tabela abaixo.">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barGap={2} barCategoryGap="28%" margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
-            <CartesianGrid vertical={false} stroke="#E3E6E0" />
-            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: '#D5D9D2' }} tick={{ fill: '#5B6660', fontSize: 12 }} />
+            <CartesianGrid vertical={false} stroke="var(--color-line)" />
+            <XAxis dataKey="label" tickLine={false} axisLine={{ stroke: 'var(--color-line-strong)' }} tick={{ fill: 'var(--color-muted)', fontSize: 12 }} />
             <YAxis
               width={44}
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#5B6660', fontSize: 12 }}
+              tick={{ fill: 'var(--color-muted)', fontSize: 12 }}
               tickFormatter={(v: number) => compact.format(v / 100)}
             />
-            <Tooltip cursor={{ fill: '#F4F5F1' }} content={(props) => <ChartTooltip {...props} />} />
+            <Tooltip cursor={{ fill: 'var(--color-ground)' }} content={(props) => <ChartTooltip {...props} />} />
             <Bar dataKey="income" name="Receitas" fill={INCOME} radius={[4, 4, 0, 0]} maxBarSize={28} />
             <Bar dataKey="expense" name="Despesas" fill={EXPENSE} radius={[4, 4, 0, 0]} maxBarSize={28} />
           </BarChart>

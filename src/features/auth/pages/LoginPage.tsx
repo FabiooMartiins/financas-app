@@ -66,7 +66,7 @@ export function LoginPage() {
     <div className="pt-safe pb-safe flex min-h-dvh items-center justify-center px-7">
       <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-8 py-12">
         <div className="flex flex-col gap-5">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-brand font-display text-xl font-bold text-white">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-brand font-display text-xl font-bold text-on-brand">
             R$
           </div>
           <div className="flex flex-col gap-2">

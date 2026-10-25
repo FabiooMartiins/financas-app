@@ -18,8 +18,56 @@
   --color-cat-leisure: #8A5CB8;
   --color-cat-other: #9AA39E;
 
+  /* Texto sobre fundos coloridos e painéis escuros (cartão) */
+  --color-on-brand: #FFFFFF;
+  --color-on-expense: #FFFFFF;
+  --color-hero: #15201B;
+  --color-on-hero: #FFFFFF;
+  /* Avisos e selos */
+  --color-warn: #8A5A00;
+  --color-warn-soft: #FFF4DC;
+  --color-info: #2F5F96;
+  --color-info-soft: #E6EEF8;
+  --color-invest: #6E4598;
+  --color-invest-soft: #F1EAF8;
+  /* Gráficos */
+  --color-chart-income: #00775A;
+  --color-chart-expense: #B4410F;
+
   --font-sans: "Manrope", system-ui, sans-serif;
   --font-display: "Sora", "Manrope", system-ui, sans-serif;
+}
+
+/*
+ * Tema escuro (RF-34, RNF-15) — padrão do app. Os utilitários do Tailwind leem as
+ * variáveis acima, então basta trocar os valores. O tema é aplicado em <html data-theme>
+ * por lib/theme.ts (e pelo script no index.html, para não piscar claro ao abrir).
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ground: #0E1412;
+  --color-surface: #182320;
+  --color-ink: #E6ECE9;
+  --color-muted: #9AA7A1;
+  --color-line: #26322E;
+  --color-line-strong: #34423D;
+  --color-brand: #4CC9A4;
+  --color-brand-dark: #7FDCC0;
+  --color-income: #4CC9A4;
+  --color-expense: #F2895A;
+  --color-expense-soft: #3A2219;
+  --color-on-brand: #06140F;
+  --color-on-expense: #1A0D06;
+  --color-hero: #22302B;
+  --color-on-hero: #E6ECE9;
+  --color-warn: #F2C46B;
+  --color-warn-soft: #3A2E14;
+  --color-info: #7DB2E8;
+  --color-info-soft: #1C2A3A;
+  --color-invest: #C3A3E8;
+  --color-invest-soft: #2B2338;
+  --color-chart-income: #3DB892;
+  --color-chart-expense: #E07A4A;
 }
 
 html,
