@@ -146,24 +146,24 @@ function MonthAmountForm({ occurrence: o, onDone }: { occurrence: BillOccurrence
       <MoneyInput label={`Valor de ${monthLabel} (R$)`} value={amount} onChange={setAmount} error={error ?? undefined} autoFocus />
       <p className="-mt-1 text-sm text-muted">Muda só este mês. Os meses anteriores e os próximos continuam com {formatCents(o.bill.amount_cents)}.</p>
       {save.error && <ErrorState error={save.error} />}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2">
         <Button variant="secondary" className="h-11 flex-1 text-sm" onClick={onDone}>
           Cancelar
         </Button>
-        {o.customAmount && (
-          <Button
-            variant="ghost"
-            className="h-11 flex-1 text-sm"
-            disabled={save.isPending}
-            onClick={() => save.mutate({ billId: o.bill.id, month: o.month, amountCents: null }, { onSuccess: onDone })}
-          >
-            Voltar ao padrão
-          </Button>
-        )}
         <Button className="h-11 flex-1 text-sm" disabled={save.isPending} onClick={submit}>
           {save.isPending ? 'Salvando…' : 'Salvar valor'}
         </Button>
       </div>
+      {o.customAmount && (
+        <button
+          type="button"
+          className="min-h-11 self-start text-sm font-semibold text-muted underline"
+          disabled={save.isPending}
+          onClick={() => save.mutate({ billId: o.bill.id, month: o.month, amountCents: null }, { onSuccess: onDone })}
+        >
+          Voltar ao valor padrão ({formatCents(o.bill.amount_cents)})
+        </button>
+      )}
     </div>
   );
 }

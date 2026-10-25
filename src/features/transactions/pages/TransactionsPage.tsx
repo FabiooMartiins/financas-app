@@ -51,11 +51,14 @@ export function TransactionsPage() {
         action={
           <div className="flex gap-2">
             <Link to="/importar" className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
-              Importar extrato
+              Importar
             </Link>
-            <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
-              Nova transação
-            </Link>
+            {/* No celular a nova transação fica no botão central da barra inferior */}
+            <span className="hidden lg:block">
+              <Link to="/transacoes/nova" className={buttonClasses('primary', 'h-11 px-4 text-sm')}>
+                Nova transação
+              </Link>
+            </span>
           </div>
         }
       />

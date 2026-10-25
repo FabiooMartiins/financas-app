@@ -24,7 +24,7 @@ export function CardPage() {
   const editLink = (
     <div className="flex gap-2">
       <Link to={`/importar?conta=${card.id}`} className={buttonClasses('secondary', 'h-11 px-3 text-sm')}>
-        Importar fatura
+        Importar
       </Link>
       <Link to={`/contas/${card.id}`} className={buttonClasses('secondary', 'h-11 px-3 text-sm')}>
         Editar
@@ -249,13 +249,13 @@ function ItemRow({ item }: { item: Invoice['items'][number] }) {
 function CardNameTotals({ invoice }: { invoice: Invoice }) {
   const totals = new Map<string, number>();
   for (const item of invoice.items) {
-    const key = item.card_name ?? 'Sem cartão informado';
+    const key = item.card_name ?? 'Sem cartão';
     totals.set(key, (totals.get(key) ?? 0) + item.amount_cents);
   }
   if (totals.size < 2) return null;
   return (
     <ul className="my-2 flex flex-wrap gap-2" aria-label="Total por cartão">
-      {[...totals.entries()].map(([name, cents]) => (
+      {[...totals.entries()].sort((a, b) => b[1] - a[1]).map(([name, cents]) => (
         <li key={name} className="rounded-full bg-ground px-3 py-1 text-xs font-semibold">
           {name}: {formatCents(cents)}
         </li>
