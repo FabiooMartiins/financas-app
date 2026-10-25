@@ -1,0 +1,41 @@
+# Só na branch demo-telas: compila o app com dados de exemplo e salva capturas em demo/telas.
+name: Telas de demonstração
+
+on:
+  push:
+    branches: [demo-telas]
+
+permissions:
+  contents: write
+
+jobs:
+  telas:
+    if: "!contains(github.event.head_commit.message, '[telas]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build com Supabase de exemplo
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://demo.supabase.co
+          VITE_SUPABASE_ANON_KEY: demo
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps chromium
+      - name: Capturas
+        run: |
+          npx vite preview --port 4173 --strictPort &
+          npx wait-on -t 60000 http://localhost:4173 || sleep 5
+          node demo/screenshots.mjs http://localhost:4173 demo/telas
+        env:
+          TZ: America/Maceio
+      - name: Salvar capturas na branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demo/telas
+          git commit -m "Atualiza capturas [telas]" || echo "sem mudanças"
+          git push
