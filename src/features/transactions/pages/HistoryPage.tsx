@@ -25,7 +25,10 @@ export function HistoryPage() {
   const { data: accounts } = useAccounts();
   const byId = new Map((accounts ?? []).map((a) => [a.id, a]));
   const selected = accountId ? byId.get(accountId) : undefined;
-  const chips = (accounts ?? []).filter((a) => a.is_active || a.id === accountId);
+  // A conta escolhida vem primeiro, para aparecer sem precisar rolar
+  const chips = (accounts ?? [])
+    .filter((a) => a.is_active || a.id === accountId)
+    .sort((a, b) => Number(b.id === accountId) - Number(a.id === accountId));
 
   const query = useTransactions({ start, end, accountId: accountId || undefined });
   const rows = query.data?.pages.flat() ?? [];
@@ -127,7 +130,9 @@ function HistoryRow({ t, accountId, byId, balance }: { t: TransactionRow; accoun
   const logoAccount = byId.get(accountId && t.type === 'transfer' && t.account_id === accountId ? (t.transfer_account_id ?? t.account_id) : t.account_id);
   const label = t.nature === 'yield' ? 'Rendimento' : t.nature === 'adjustment' ? 'Ajuste de saldo' : t.category?.name;
   const where =
-    t.type === 'transfer' ? `${t.account?.name ?? '?'} → ${t.transfer_account?.name ?? '?'}` : [label, t.account?.name].filter(Boolean).join(' · ');
+    t.type === 'transfer'
+      ? `${t.account?.name ?? '?'} → ${t.transfer_account?.name ?? '?'}`
+      : [label, accountId ? null : t.account?.name].filter(Boolean).join(' · ');
 
   return (
     <Link to={`/transacoes/${t.id}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">

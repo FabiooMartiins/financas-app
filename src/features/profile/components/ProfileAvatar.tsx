@@ -13,8 +13,8 @@ export function ProfileAvatar({ size = 44 }: { size?: number }) {
   }
   return (
     <span
-      style={style}
-      className="flex shrink-0 items-center justify-center rounded-full border-2 border-brand bg-invest-soft font-bold text-invest"
+      style={{ ...style, fontSize: Math.round(size * 0.4) }}
+      className="flex shrink-0 items-center justify-center rounded-full border-2 border-brand bg-invest-soft font-display font-semibold text-invest"
       aria-hidden="true"
     >
       {name ? (

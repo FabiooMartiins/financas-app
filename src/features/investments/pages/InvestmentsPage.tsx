@@ -27,7 +27,7 @@ export function InvestmentsPage() {
         title="Investimentos"
         backTo="/contas"
         action={
-          <Link to="/contas/nova?tipo=investment" className={buttonClasses('primary', 'h-11 px-4 text-sm')}>
+          <Link to="/contas/nova?tipo=investment" className={buttonClasses('primary', 'h-11 shrink-0 px-4 text-sm whitespace-nowrap')}>
             Nova caixinha
           </Link>
         }
@@ -88,12 +88,9 @@ function InvestmentCard({ summary }: { summary: InvestmentSummary }) {
         <AccountLogo account={account} />
         <div className="min-w-0 flex-1">
           <p className="truncate font-display font-semibold">{account.name}</p>
-          <p className="truncate text-sm text-muted">
-            {accountTypeLabels[account.type]}
-            {account.yield_note && ` · rende ${account.yield_note}`}
-          </p>
+          <p className="truncate text-sm text-muted">{account.yield_note ? `Rende ${account.yield_note}` : accountTypeLabels[account.type]}</p>
         </div>
-        <p className="shrink-0 font-display text-lg font-semibold">{formatCents(account.current_balance_cents)}</p>
+        <p className="shrink-0 font-display font-semibold">{formatCents(account.current_balance_cents)}</p>
       </Link>
 
       <dl className="grid grid-cols-3 gap-2 border-t border-line pt-3">
