@@ -18,7 +18,10 @@ export function useAccounts() {
 
 export function useSaveAccount() {
   return useMutation({
-    mutationFn: ({ id, input }: { id?: string; input: AccountInput }) => (id ? updateAccount(id, input) : createAccount(input)),
+    mutationFn: async ({ id, input }: { id?: string; input: AccountInput }) => {
+      if (id) await updateAccount(id, input);
+      else await createAccount(input);
+    },
     onSuccess: refreshAll,
   });
 }
