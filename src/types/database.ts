@@ -7,13 +7,13 @@ export type Database = {
           Tables: {
             "accounts": {
                   Row: {
-                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"due_days_after_closing": number | null,"external_id": string | null,"id": string,"include_in_total": boolean,"is_active": boolean,"logo_path": string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string,"yield_note": string | null
+                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"external_id": string | null,"id": string,"include_in_total": boolean,"is_active": boolean,"logo_path": string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string,"yield_note": string | null
                   }
                   Insert: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
                   }
                   Update: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
                   }
                   Relationships: [
                     {

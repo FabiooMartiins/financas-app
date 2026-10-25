@@ -45,7 +45,7 @@ export function describeInvoiceDue(invoice: Invoice): string {
 /** Linha compacta (Contas do mês e Início) que leva para a tela do cartão. */
 export function InvoiceSummaryItem({ invoice }: { invoice: Invoice }) {
   return (
-    <Link to={`/cartoes/${invoice.cardId}?fatura=${invoice.key}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
+    <Link to={`/cartoes/${invoice.cardId}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-hero text-on-hero" aria-hidden="true">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <rect x="3" y="6" width="18" height="13" rx="2" />
@@ -113,7 +113,7 @@ export function PayInvoiceForm({ invoice, onDone }: { invoice: Invoice; onDone: 
 
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-ground p-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Select label="Pagar com" value={accountId} onChange={(e) => setChosen(e.target.value)}>
           {sources.map((a) => (
             <option key={a.id} value={a.id}>

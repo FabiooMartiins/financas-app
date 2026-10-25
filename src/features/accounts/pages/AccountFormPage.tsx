@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { ErrorState, LoadingState } from '@/components/ui/States';
-import { dueDate, invoiceMonthFor } from '@/features/cards/invoices';
-import { formatDate, today } from '@/lib/dates';
 import { centsToInput, parseToCents } from '@/lib/money';
 import { accountGroup, accountTypeLabels, type Account, type AccountType } from '../api';
 import { AdjustBalanceForm } from '../components/AdjustBalanceForm';
@@ -46,25 +44,12 @@ function AccountForm({ account }: { account?: Account }) {
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
   const [limit, setLimit] = useState(account?.credit_limit_cents != null ? centsToInput(account.credit_limit_cents) : '');
   const [closingDay, setClosingDay] = useState(String(account?.closing_day ?? ''));
-  const [dueMode, setDueMode] = useState<'day' | 'after'>(account?.due_days_after_closing ? 'after' : 'day');
   const [dueDay, setDueDay] = useState(String(account?.due_day ?? ''));
-  const [dueAfter, setDueAfter] = useState(String(account?.due_days_after_closing ?? 7));
   const [includeInTotal, setIncludeInTotal] = useState(account?.include_in_total ?? true);
   const [yieldNote, setYieldNote] = useState(account?.yield_note ?? '');
   const [formError, setFormError] = useState<string | null>(null);
   // Depois de salvar, volta para a lista do grupo (Cartões, Investimentos ou Contas)
   const listPath = group === 'card' ? '/cartoes' : group === 'investment' ? '/investimentos' : '/contas';
-
-  // Prévia: vencimento da fatura em que cairia uma compra feita hoje
-  const cycle = {
-    closing_day: Number(closingDay),
-    due_day: dueMode === 'day' ? Number(dueDay) : null,
-    due_days_after_closing: dueMode === 'after' ? Number(dueAfter) : null,
-  };
-  const dueValue = cycle.due_day ?? cycle.due_days_after_closing ?? 0;
-  const validCycle = cycle.closing_day >= 1 && dueValue >= 1 && dueValue <= (dueMode === 'day' ? 31 : 40);
-  const purchaseToday = invoiceMonthFor(cycle, today());
-  const nextDue = isCard && validCycle ? dueDate(cycle, purchaseToday.year, purchaseToday.month) : null;
 
   const fromBank = account?.fromBank ?? false;
 
@@ -96,8 +81,7 @@ function AccountForm({ account }: { account?: Account }) {
           // Campos de cartão ficam vazios nos outros tipos
           credit_limit_cents: isCard ? limitCents : null,
           closing_day: isCard ? Number(closingDay) : null,
-          due_day: isCard && dueMode === 'day' ? Number(dueDay) : null,
-          due_days_after_closing: isCard && dueMode === 'after' ? Number(dueAfter) : null,
+          due_day: isCard ? Number(dueDay) : null,
         },
       },
       { onSuccess: () => navigate(listPath) },
@@ -139,50 +123,30 @@ function AccountForm({ account }: { account?: Account }) {
         {isCard && (
           <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
             <h2 className="font-display font-semibold">Fatura</h2>
-            <Select label="Fechamento" required value={closingDay} onChange={(e) => setClosingDay(e.target.value)}>
-              <option value="" disabled>
-                Escolha o dia
-              </option>
-              <option value="31">Último dia do mês</option>
-              {Array.from({ length: 30 }, (_, i) => (
-                <option key={i + 1} value={String(i + 1)}>
-                  Dia {i + 1}
-                </option>
-              ))}
-            </Select>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Select label="Vencimento" value={dueMode} onChange={(e) => setDueMode(e.target.value as 'day' | 'after')}>
-                <option value="day">Dia fixo do mês</option>
-                <option value="after">Dias depois do fechamento</option>
-              </Select>
-              {dueMode === 'day' ? (
-                <Input
-                  label="Dia do vencimento"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={31}
-                  required
-                  value={dueDay}
-                  onChange={(e) => setDueDay(e.target.value)}
-                />
-              ) : (
-                <Input
-                  label="Quantos dias depois"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={40}
-                  required
-                  value={dueAfter}
-                  onChange={(e) => setDueAfter(e.target.value)}
-                />
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Dia do fechamento"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={31}
+                required
+                value={closingDay}
+                onChange={(e) => setClosingDay(e.target.value)}
+              />
+              <Input
+                label="Dia do vencimento"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={31}
+                required
+                value={dueDay}
+                onChange={(e) => setDueDay(e.target.value)}
+              />
             </div>
             <p className="-mt-2 text-sm text-muted">
-              Estão no app do banco ou na fatura. Compras a partir do dia do fechamento entram na fatura seguinte. Vencimento em fim de semana ou
-              feriado nacional passa para o próximo dia útil.
-              {nextDue && <strong className="block pt-1 text-ink">Próxima fatura vence em {formatDate(nextDue)}.</strong>}
+              Estão no app do banco ou na fatura. Compras a partir do dia do fechamento entram na fatura seguinte.
             </p>
             <Input label="Limite (R$, opcional)" inputMode="decimal" placeholder="0,00" value={limit} onChange={(e) => setLimit(e.target.value)} />
           </div>

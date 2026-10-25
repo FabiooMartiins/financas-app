@@ -11,8 +11,8 @@ export interface CardWithInvoices {
   invoices: Invoice[] | null;
 }
 
-export function isConfiguredCard(a: Account): a is Account & { closing_day: number } {
-  return a.type === 'credit_card' && a.closing_day !== null && (a.due_day !== null || a.due_days_after_closing !== null);
+export function isConfiguredCard(a: Account): a is Account & { closing_day: number; due_day: number } {
+  return a.type === 'credit_card' && a.closing_day !== null && a.due_day !== null;
 }
 
 /** Cartões ativos (ou um cartão específico) com as faturas calculadas. */
@@ -43,13 +43,12 @@ export function useCards(cardId?: string) {
   };
 }
 
-function toSettings(card: Account & { closing_day: number }): CardSettings {
+function toSettings(card: Account & { closing_day: number; due_day: number }): CardSettings {
   return {
     id: card.id,
     name: card.name,
     closing_day: card.closing_day,
     due_day: card.due_day,
-    due_days_after_closing: card.due_days_after_closing,
     credit_limit_cents: card.credit_limit_cents,
     balance_cents: card.balance_cents,
     created_at: card.created_at,

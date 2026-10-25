@@ -50,9 +50,7 @@ export function DashboardPage() {
     .filter((i) => i.remaining > 0 && i.status !== 'future')
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
   const greetingName = profile?.nickname || profile?.full_name?.split(' ')[0];
-  // Estorno no cartão abate a despesa em vez de contar como receita
-  const cardIds = new Set(accounts.data?.filter((a) => a.type === 'credit_card').map((a) => a.id));
-  const totals = movements.data && accounts.data ? totalsByMonth(movements.data, month, 1, cardIds)[0] : undefined;
+  const totals = movements.data ? totalsByMonth(movements.data, month, 1)[0] : undefined;
 
   const notDone = bills.data?.filter((o) => o.status !== 'paid' && (o.status === 'overdue' || o.month.getTime() === month.getTime())) ?? [];
   const pending = notDone.filter((o) => o.bill.kind === 'expense');
@@ -128,20 +126,20 @@ export function DashboardPage() {
       )}
 
       {/* Celular: empilhado. PC: saldo à esquerda, receitas/despesas à direita. */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <div className="grid gap-3 lg:grid-cols-3">
         <Link to="/contas" className="rounded-2xl bg-brand p-5 text-on-brand lg:col-span-1">
           <p className="text-sm font-semibold">Saldo total em contas</p>
-          <p className="font-display text-3xl font-semibold break-words">{totalBalance !== undefined ? formatCents(totalBalance) : '—'}</p>
+          <p className="font-display text-3xl font-semibold">{totalBalance !== undefined ? formatCents(totalBalance) : '—'}</p>
           <p className="mt-1 text-sm">Sem cartão nem investimentos</p>
         </Link>
         <div className="grid grid-cols-2 gap-3 lg:col-span-2">
-          <Card className="min-w-0 p-4">
+          <Card className="p-4">
             <p className="text-sm text-muted">Receitas do mês</p>
-            <p className="font-display text-base font-semibold break-words text-income sm:text-lg">{totals ? formatCents(totals.income) : '—'}</p>
+            <p className="font-display text-lg font-semibold text-income">{totals ? formatCents(totals.income) : '—'}</p>
           </Card>
-          <Card className="min-w-0 p-4">
+          <Card className="p-4">
             <p className="text-sm text-muted">Despesas do mês</p>
-            <p className="font-display text-base font-semibold break-words text-expense sm:text-lg">{totals ? formatCents(totals.expense) : '—'}</p>
+            <p className="font-display text-lg font-semibold text-expense">{totals ? formatCents(totals.expense) : '—'}</p>
           </Card>
         </div>
       </div>
@@ -165,7 +163,7 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <section className="flex min-w-0 flex-col gap-2">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">Próximos vencimentos</h2>
             <Link to="/vencimentos" className="flex min-h-11 items-center text-sm font-semibold text-brand">
@@ -184,7 +182,7 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="flex min-w-0 flex-col gap-2">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">
               A receber{receivables.length > 0 && <span className="font-normal text-income"> · {formatCents(receivableTotal)}</span>}
@@ -210,7 +208,7 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="flex min-w-0 flex-col gap-2">
+        <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display font-semibold">Últimas transações</h2>
             <Link to="/transacoes" className="flex min-h-11 items-center text-sm font-semibold text-brand">

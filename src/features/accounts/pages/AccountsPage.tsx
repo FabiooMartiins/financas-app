@@ -6,8 +6,6 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useBillOccurrences } from '@/features/bills/hooks/useBills';
-import { isConfiguredCard } from '@/features/cards/hooks/useCards';
-import { describeCycle } from '@/features/cards/invoices';
 import { startOfMonth } from '@/lib/dates';
 import { formatCents } from '@/lib/money';
 import { accountGroup, accountTypeLabels, totalBalance, type Account, type AccountGroup } from '../api';
@@ -138,8 +136,8 @@ function AccountList({ accounts, incoming }: { accounts: Account[]; incoming: Ma
               <p className="truncate text-sm text-muted">
                 {/* O grupo já diz o tipo; aqui vai o que muda de conta para conta */}
                 {isCard
-                  ? isConfiguredCard(account)
-                    ? cycleLabel(account)
+                  ? account.due_day
+                    ? `Vence dia ${account.due_day}`
                     : 'Configurar fatura'
                   : account.yield_note
                     ? `Rende ${account.yield_note}`
@@ -175,10 +173,4 @@ function MenuLink({ to, label, hint }: { to: string; label: string; hint: string
       </svg>
     </Link>
   );
-}
-
-/** "Fecha no último dia, vence 7 dias depois" */
-function cycleLabel(card: Account & { closing_day: number }) {
-  const { closing, due } = describeCycle(card);
-  return `${closing}, ${due.toLowerCase()}`;
 }

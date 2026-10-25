@@ -12,7 +12,6 @@ import { CardPage } from '@/features/cards/pages/CardPage';
 import { CardsPage } from '@/features/cards/pages/CardsPage';
 import { CategoriesPage } from '@/features/categories/pages/CategoriesPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
-import { ImportPage } from '@/features/import/pages/ImportPage';
 import { InvestmentsPage } from '@/features/investments/pages/InvestmentsPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { HistoryPage } from '@/features/transactions/pages/HistoryPage';
@@ -31,7 +30,6 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'transacoes', element: <TransactionsPage /> },
       { path: 'transacoes/nova', element: <TransactionFormPage /> },
-      { path: 'transacoes/importar', element: <ImportPage /> },
       { path: 'transacoes/:id', element: <TransactionFormPage /> },
       { path: 'vencimentos', element: <BillsPage /> },
       { path: 'vencimentos/nova', element: <BillFormPage /> },

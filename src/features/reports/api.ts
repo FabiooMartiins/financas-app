@@ -2,15 +2,11 @@ import { supabase } from '@/lib/supabase';
 import { addMonths, formatMonthShort, monthRange, toISODate } from '@/lib/dates';
 import type { Category } from '@/features/categories/api';
 
-export interface Movement {
-  id: string;
+interface Movement {
   type: 'income' | 'expense';
   amount_cents: number;
   occurred_on: string;
   category_id: string | null;
-  account_id: string;
-  description: string;
-  external_id: string | null;
 }
 
 /**
@@ -23,28 +19,17 @@ export async function listMovements(from: string, to: string): Promise<Movement[
   for (let page = 0; ; page++) {
     const { data, error } = await supabase
       .from('transactions')
-      .select('id, type, amount_cents, occurred_on, category_id, account_id, description, external_id')
+      .select('type, amount_cents, occurred_on, category_id')
       .in('type', ['income', 'expense'])
       .eq('nature', 'normal') // RN-10: sem rendimentos e ajustes de saldo
       .gte('occurred_on', from)
       .lte('occurred_on', to)
-      // Ordem única (id desempata): sem ela a paginação repete ou pula linhas do mesmo dia
       .order('occurred_on')
-      .order('id')
       .range(page * pageSize, page * pageSize + pageSize - 1);
     if (error) throw error;
     rows.push(...(data as Movement[]));
     if (data.length < pageSize) return rows;
   }
-}
-
-/**
- * Como a movimentação conta nos relatórios. Crédito no cartão (estorno, reembolso) abate as
- * despesas em vez de virar receita; pagamento de fatura é transferência e nem chega aqui (RN-02).
- */
-export function classify(m: Movement, cardIds: Set<string>): { kind: 'income' | 'expense'; cents: number } {
-  if (m.type === 'income' && cardIds.has(m.account_id)) return { kind: 'expense', cents: -m.amount_cents };
-  return { kind: m.type, cents: m.amount_cents };
 }
 
 export interface MonthTotals {
@@ -54,25 +39,16 @@ export interface MonthTotals {
   expense: number;
 }
 
-export function totalsByMonth(movements: Movement[], lastMonth: Date, count: number, cardIds: Set<string>): MonthTotals[] {
-  const byMonth = new Map<string, { income: number; expense: number }>();
-  for (const m of movements) {
-    const key = m.occurred_on.slice(0, 7);
-    const totals = byMonth.get(key) ?? { income: 0, expense: 0 };
-    const { kind, cents } = classify(m, cardIds);
-    totals[kind] += cents;
-    byMonth.set(key, totals);
-  }
+export function totalsByMonth(movements: Movement[], lastMonth: Date, count: number): MonthTotals[] {
   return Array.from({ length: count }, (_, i) => {
     const month = addMonths(lastMonth, i - count + 1);
-    const totals = byMonth.get(toISODate(month).slice(0, 7));
-    const label = formatMonthShort(month);
+    const prefix = toISODate(month).slice(0, 7);
+    const inMonth = movements.filter((m) => m.occurred_on.startsWith(prefix));
     return {
       month,
-      // Ano no rótulo quando o período atravessa a virada do ano ("dez/25", "jan/26")
-      label: count > 1 && month.getMonth() === 0 ? `${label}/${String(month.getFullYear()).slice(2)}` : label,
-      income: totals?.income ?? 0,
-      expense: totals?.expense ?? 0,
+      label: formatMonthShort(month),
+      income: inMonth.filter((m) => m.type === 'income').reduce((s, m) => s + m.amount_cents, 0),
+      expense: inMonth.filter((m) => m.type === 'expense').reduce((s, m) => s + m.amount_cents, 0),
     };
   });
 }
@@ -85,46 +61,26 @@ export interface CategoryTotal {
   share: number; // 0..1
 }
 
-/**
- * RF-23: total por categoria no mês; subcategorias somam na categoria principal.
- * Estorno no cartão abate a própria categoria (se for de despesa) ou entra em `refunds`.
- */
-export function totalsByCategory(
-  movements: Movement[],
-  categories: Category[],
-  month: Date,
-  type: 'income' | 'expense',
-  cardIds: Set<string>,
-): { totals: CategoryTotal[]; refunds: number } {
+/** RF-23: total por categoria no mês; subcategorias somam na categoria principal. */
+export function totalsByCategory(movements: Movement[], categories: Category[], month: Date, type: 'income' | 'expense'): CategoryTotal[] {
   const { start, end } = monthRange(month);
   const byId = new Map(categories.map((c) => [c.id, c]));
   const totals = new Map<string | null, number>();
-  let refunds = 0;
 
   for (const m of movements) {
-    if (m.occurred_on < start || m.occurred_on > end) continue;
-    const { kind, cents } = classify(m, cardIds);
-    if (kind !== type) continue;
+    if (m.type !== type || m.occurred_on < start || m.occurred_on > end) continue;
     const category = m.category_id ? byId.get(m.category_id) : undefined;
-    if (cents < 0 && category?.kind !== 'expense') {
-      refunds -= cents;
-      continue;
-    }
     const key = category?.parent_id ?? category?.id ?? null;
-    totals.set(key, (totals.get(key) ?? 0) + cents);
+    totals.set(key, (totals.get(key) ?? 0) + m.amount_cents);
   }
 
-  const positive = [...totals.entries()].filter(([, cents]) => cents > 0);
-  const sum = positive.reduce((s, [, v]) => s + v, 0);
-  return {
-    totals: positive
-      .map(([id, cents]) => {
-        const category = id ? byId.get(id) : undefined;
-        return { id, name: category?.name ?? 'Sem categoria', color: category?.color ?? '#9AA39E', cents, share: sum ? cents / sum : 0 };
-      })
-      .sort((a, b) => b.cents - a.cents),
-    refunds,
-  };
+  const sum = [...totals.values()].reduce((s, v) => s + v, 0);
+  return [...totals.entries()]
+    .map(([id, cents]) => {
+      const category = id ? byId.get(id) : undefined;
+      return { id, name: category?.name ?? 'Sem categoria', color: category?.color ?? '#9AA39E', cents, share: sum ? cents / sum : 0 };
+    })
+    .sort((a, b) => b.cents - a.cents);
 }
 
 /** Exporta as transações do período em CSV (abre no Excel/Numbers/Google Planilhas). */

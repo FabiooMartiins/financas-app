@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MonthSwitcher } from '@/components/ui/MonthSwitcher';
@@ -15,12 +15,7 @@ import { useTransactions } from '../hooks/useTransactions';
 
 // RF-11 a RF-15: lista do mês com busca e filtros, agrupada por dia
 export function TransactionsPage() {
-  // ?mes=aaaa-mm abre direto num mês (ex.: depois de importar um extrato antigo)
-  const [params] = useSearchParams();
-  const [month, setMonth] = useState(() => {
-    const match = /^(\d{4})-(\d{2})$/.exec(params.get('mes') ?? '');
-    return match ? new Date(Number(match[1]), Number(match[2]) - 1, 1) : startOfMonth(new Date());
-  });
+  const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [searchInput, setSearchInput] = useState('');
   const search = useDebounced(searchInput.trim(), 350);
   const [type, setType] = useState<TransactionType | ''>('');
@@ -48,14 +43,9 @@ export function TransactionsPage() {
       <PageHeader
         title="Transações"
         action={
-          <div className="flex gap-2">
-            <Link to="/transacoes/importar" className={buttonClasses('secondary', 'h-11 px-4 text-sm')}>
-              Importar extrato
-            </Link>
-            <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
-              Nova transação
-            </Link>
-          </div>
+          <Link to="/transacoes/nova" className={buttonClasses('primary', 'hidden h-11 px-4 text-sm lg:inline-flex')}>
+            Nova transação
+          </Link>
         }
       />
 
@@ -78,7 +68,7 @@ export function TransactionsPage() {
       </div>
 
       {showFilters && (
-        <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+        <Card className="grid gap-3 p-4 sm:grid-cols-3">
           <Select label="Tipo" value={type} onChange={(e) => setType(e.target.value as TransactionType | '')}>
             <option value="">Todos</option>
             <option value="expense">Despesas</option>

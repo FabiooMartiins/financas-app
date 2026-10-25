@@ -48,7 +48,6 @@ export async function listTransactions(filters: TransactionFilters, page = 0): P
     .lte('occurred_on', filters.end)
     .order('occurred_on', { ascending: false })
     .order('created_at', { ascending: false })
-    .order('id', { ascending: false }) // desempate estável entre páginas
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
   // Filtrar por conta inclui transferências que entram nela
