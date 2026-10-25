@@ -8,6 +8,7 @@ const [base = 'http://localhost:4173', outDir = 'demo/telas'] = process.argv.sli
 await mkdir(outDir, { recursive: true });
 
 const SUPABASE = 'https://demo.supabase.co';
+let currentTheme = 'dark';
 const tables = {
   accounts: () => data.accounts,
   account_balances: () => data.balances(),
@@ -16,7 +17,7 @@ const tables = {
   bills: () => data.bills,
   bill_payments: () => data.billPayments,
   bank_connections: () => [],
-  profiles: () => [data.profile],
+  profiles: () => [{ ...data.profile, theme: currentTheme }],
 };
 
 // Filtros do PostgREST usados pelo app: eq, gt, gte, lte, in e or(...)
@@ -93,7 +94,18 @@ const session = {
 
 const browser = await chromium.launch();
 
+// Tela inteira com a barra de navegação no fim (e não no meio da captura)
+async function capture(page, file) {
+  await page.waitForTimeout(1200);
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  await page.setViewportSize({ width: 390, height: Math.max(844, height) });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: file });
+  await page.setViewportSize({ width: 390, height: 844 });
+}
+
 async function newPage(theme) {
+  currentTheme = theme;
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
@@ -149,15 +161,13 @@ const screens = [
 const dark = await newPage('dark');
 for (const [name, path] of screens) {
   await dark.goto(base + path, { waitUntil: 'networkidle' });
-  await dark.waitForTimeout(1200);
-  await dark.screenshot({ path: `${outDir}/${name}.png`, fullPage: true });
+  await capture(dark, `${outDir}/${name}.png`);
   console.log('ok', name);
 }
 
 const light = await newPage('light');
 await light.goto(base + '/', { waitUntil: 'networkidle' });
-await light.waitForTimeout(1200);
-await light.screenshot({ path: `${outDir}/12-inicio-tema-claro.png`, fullPage: true });
+await capture(light, `${outDir}/12-inicio-tema-claro.png`);
 console.log('ok 12-inicio-tema-claro');
 
 await browser.close();

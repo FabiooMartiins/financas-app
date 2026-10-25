@@ -133,8 +133,10 @@ export const bills = [
   { id: 'b3', kind: 'income', name: 'Freela de design', amount_cents: 80000, due_day: 30, frequency: 'once', category_id: 'c1', account_id: 'a1', remind_days_before: 3, installments_total: null, starts_on: month(0, 1), is_active: true, category: { id: 'c1', ...catById.c1 }, account: { id: 'a1', name: accById.a1.name } },
 ];
 
+// Aluguel e internet pagos nos meses anteriores; aluguel também neste mês
 export const billPayments = [
-  { bill_id: 'b1', reference_month: month(0, 1), transaction_id: 't2', paid_at: month(0, 1) + 'T12:00:00Z', transaction: { occurred_on: month(0, 1), account: { name: accById.a1.name } } },
+  ...[-6, -5, -4, -3, -2, -1, 0].map((m) => ({ bill_id: 'b1', reference_month: month(m, 1), transaction_id: null, paid_at: month(m, 1) + 'T12:00:00Z', transaction: { occurred_on: month(m, 1), account: { name: accById.a1.name } } })),
+  ...[-6, -5, -4, -3, -2, -1].map((m) => ({ bill_id: 'b2', reference_month: month(m, 1), transaction_id: null, paid_at: month(m, 28) + 'T12:00:00Z', transaction: { occurred_on: month(m, 28), account: { name: accById.a1.name } } })),
 ];
 
 export const profile = {
