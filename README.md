@@ -28,6 +28,12 @@ npx supabase gen types typescript --project-id SEU_ID > src/types/database.ts
 
 ## Publicação (Cloudflare Pages)
 
+**Automática:** cada push na `main` roda `.github/workflows/deploy.yml` (build, migrações do
+Supabase e upload para o Pages). Configure uma vez os segredos listados no topo do arquivo em
+Settings → Secrets and variables → Actions. O botão "Run workflow" na aba Actions publica de novo.
+
+**Manual** (do seu computador):
+
 Produção: https://financas-app-a4b.pages.dev (projeto `financas-app`)
 
 ```bash
