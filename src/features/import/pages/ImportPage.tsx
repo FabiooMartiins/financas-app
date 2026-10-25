@@ -55,7 +55,12 @@ export function ImportPage() {
   if (isPending) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
   const active = accounts.filter((a) => a.is_active);
-  const account = active.find((a) => a.id === chosenAccountId) ?? active[0];
+  // Padrão: a conta corrente (extrato mais comum); depois o cartão
+  const account =
+    active.find((a) => a.id === chosenAccountId) ??
+    active.find((a) => a.type === 'checking') ??
+    active.find((a) => a.type === 'credit_card') ??
+    active[0];
 
   if (!account) {
     return (
