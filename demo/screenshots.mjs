@@ -17,6 +17,7 @@ const tables = {
   bills: () => data.bills,
   bill_payments: () => data.billPayments,
   bank_connections: () => [],
+  bill_amount_overrides: () => data.billOverrides,
   profiles: () => [{ ...data.profile, theme: currentTheme }],
 };
 
@@ -146,28 +147,41 @@ async function newPage(theme) {
 
 const screens = [
   ['01-inicio', '/'],
-  ['02-cartoes', '/cartoes'],
-  ['03-cartao-nubank', '/cartoes/a3'],
-  ['04-investimentos', '/investimentos'],
-  ['05-contas', '/contas'],
-  ['06-historico-conta-corrente', '/historico?conta=a1'],
-  ['07-editar-conta-ajustar-saldo', '/contas/a1'],
-  ['08-perfil', '/perfil'],
-  ['09-transacoes', '/transacoes'],
-  ['10-relatorios', '/relatorios'],
-  ['11-vencimentos', '/vencimentos'],
+  ['02-transacoes', '/transacoes'],
+  ['03-contas-do-mes', '/vencimentos'],
+  ['04-historico-por-conta', '/historico?conta=a1'],
+  ['05-relatorios', '/relatorios'],
+  ['06-nova-transacao-cartao', '/transacoes/nova'],
+  ['07-contas', '/contas'],
+  ['08-cartoes', '/cartoes'],
+  ['09-cartao-nubank', '/cartoes/a3'],
+  ['10-editar-cartao', '/contas/a3'],
+  ['11-editar-conta-corrente', '/contas/a1'],
+  ['12-investimentos', '/investimentos'],
+  ['13-ajustes', '/configuracoes'],
+  ['14-importar-extrato', '/importar'],
+  ['15-categorias', '/categorias'],
+  ['16-perfil', '/perfil'],
 ];
 
 const dark = await newPage('dark');
 for (const [name, path] of screens) {
   await dark.goto(base + path, { waitUntil: 'networkidle' });
+  if (name.startsWith('06-')) {
+    await dark.waitForTimeout(800);
+    await dark.getByLabel('Pago com').selectOption('a3');
+  }
+  if (name.startsWith('03-')) {
+    await dark.waitForTimeout(800);
+    await dark.getByRole('button', { name: /Mudar o valor de Energia/ }).click();
+  }
   await capture(dark, `${outDir}/${name}.png`);
   console.log('ok', name);
 }
 
 const light = await newPage('light');
 await light.goto(base + '/', { waitUntil: 'networkidle' });
-await capture(light, `${outDir}/12-inicio-tema-claro.png`);
-console.log('ok 12-inicio-tema-claro');
+await capture(light, `${outDir}/17-inicio-tema-claro.png`);
+console.log('ok 17-inicio-tema-claro');
 
 await browser.close();

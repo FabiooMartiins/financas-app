@@ -34,9 +34,9 @@ const acc = (id, name, type, balance, extra = {}) => ({
 });
 
 export const accounts = [
-  acc('a1', 'Conta corrente Itaú', 'checking', 0),
+  acc('a1', 'Conta corrente Itaú', 'checking', 0, { bank_branch: '0001', bank_account: '12345-6' }),
   acc('a2', 'Carteira', 'wallet', 0),
-  acc('a3', 'Nubank', 'credit_card', 0, { credit_limit_cents: 500000, closing_day: 3, due_day: 10, include_in_total: false }),
+  acc('a3', 'Nubank', 'credit_card', 0, { credit_limit_cents: 500000, closing_day: 3, due_day: 10, include_in_total: false, card_names: ['Físico', 'Virtual', 'Adicional Ana'] }),
   acc('a4', 'Poupança', 'savings', 340000, { include_in_total: false }),
   acc('a5', 'Caixinha Nubank', 'investment', 145000, { include_in_total: false, yield_note: '100% do CDI' }),
 ];
@@ -69,6 +69,7 @@ const tx = (type, amount, description, occurred_on, account_id, opts = {}) => {
     transfer_account_id: opts.to ?? null,
     category_id: opts.cat ?? null,
     created_at: `${occurred_on}T12:${pad(seq % 60)}:00Z`,
+    card_name: opts.card ?? null,
   };
   t.account = { id: account_id, name: accById[account_id].name };
   t.transfer_account = t.transfer_account_id ? { id: t.transfer_account_id, name: accById[t.transfer_account_id].name } : null;
@@ -86,10 +87,10 @@ export const transactions = [
   tx('income', 3160, 'Ajuste de saldo', day(-1), 'a1', { nature: 'adjustment' }),
   tx('transfer', 66000, 'Pagamento fatura — Nubank', month(0, 9), 'a1', { to: 'a3' }),
   // Cartão Nubank — fatura aberta (fecha dia 3)
-  tx('expense', 2790, 'Aplicativo de transporte', day(0), 'a3', { cat: 'c3' }),
-  tx('expense', 6430, 'Farmácia', month(0, 8), 'a3', { cat: 'c5' }),
+  tx('expense', 2790, 'Aplicativo de transporte', day(0), 'a3', { cat: 'c3', card: 'Virtual' }),
+  tx('expense', 6430, 'Farmácia', month(0, 8), 'a3', { cat: 'c5', card: 'Adicional Ana' }),
   tx('expense', 3990, 'Streaming', month(0, 6), 'a3', { cat: 'c4' }),
-  tx('expense', 79350, 'Mercado do mês', month(0, 20), 'a3', { cat: 'c2' }),
+  tx('expense', 79350, 'Mercado do mês', month(0, 20), 'a3', { cat: 'c2', card: 'Físico' }),
   ...Array.from({ length: 8 }, (_, i) => tx('expense', 32000, `Notebook (${i + 3}/10)`, month(i, 12), 'a3', { cat: 'c8' })),
   // Fatura anterior (paga no dia 9)
   tx('expense', 66000, 'Mercado do mês', month(-1, 20), 'a3', { cat: 'c2' }),
@@ -152,3 +153,8 @@ export const profile = {
   theme: 'dark',
   updated_at: now.toISOString(),
 };
+
+// Conta de luz: valor diferente só neste mês
+export const billOverrides = [{ bill_id: 'b4', reference_month: month(0, 1), amount_cents: 18732 }];
+bills.push({ id: 'b4', kind: 'expense', name: 'Energia', amount_cents: 15000, due_day: 27, frequency: 'monthly', category_id: 'c7', account_id: 'a1', remind_days_before: 3, installments_total: null, starts_on: month(-6, 1), is_active: true, category: { id: 'c7', ...catById.c7 }, account: { id: 'a1', name: accById.a1.name } });
+billPayments.push(...[-6, -5, -4, -3, -2, -1].map((m) => ({ bill_id: 'b4', reference_month: month(m, 1), transaction_id: null, paid_at: month(m, 27) + 'T12:00:00Z', transaction: { occurred_on: month(m, 27), account: { name: accById.a1.name } } })));
