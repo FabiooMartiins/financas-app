@@ -97,11 +97,10 @@ const browser = await chromium.launch();
 // Tela inteira com a barra de navegação no fim (e não no meio da captura)
 async function capture(page, file) {
   await page.waitForTimeout(1200);
-  const height = await page.evaluate(() => document.documentElement.scrollHeight);
-  await page.setViewportSize({ width: 390, height: Math.max(844, height) });
-  await page.waitForTimeout(400);
-  await page.screenshot({ path: file });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addStyleTag({
+    content: '#root{position:relative} nav[aria-label="Navegação principal"].fixed{position:absolute !important}',
+  });
+  await page.screenshot({ path: file, fullPage: true });
 }
 
 async function newPage(theme) {
