@@ -5,9 +5,11 @@ import type { TransactionRow } from '../api';
 /** Uma linha da lista de transações. Transferências aparecem neutras (RN-01). */
 export function TransactionItem({ transaction: t, showDate }: { transaction: TransactionRow; showDate?: string }) {
   const isTransfer = t.type === 'transfer';
+  // RN-10: rendimento e ajuste aparecem identificados (não entram em receitas/despesas)
+  const natureLabel = t.nature === 'yield' ? 'Rendimento' : t.nature === 'adjustment' ? 'Ajuste de saldo' : null;
   const subtitle = isTransfer
     ? `${t.account?.name ?? '?'} → ${t.transfer_account?.name ?? '?'}`
-    : [t.category?.name ?? 'Sem categoria', t.account?.name].filter(Boolean).join(' · ');
+    : [natureLabel ?? t.category?.name ?? 'Sem categoria', t.account?.name].filter(Boolean).join(' · ');
 
   return (
     <Link to={`/transacoes/${t.id}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">

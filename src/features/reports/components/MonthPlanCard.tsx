@@ -17,7 +17,7 @@ export function MonthPlanCard({ plan, mode }: { plan: MonthPlan; mode: PlanMode 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Total label="Vai entrar" cents={plan.totalIncome} done={plan.doneIncome} tone="text-income" />
         <Total label="Vai sair" cents={plan.totalExpense} done={plan.doneExpense} tone="text-expense" />
-        <div className={`col-span-2 rounded-2xl p-4 lg:col-span-1 ${diff >= 0 ? 'bg-brand text-white' : 'bg-expense-soft text-expense'}`}>
+        <div className={`col-span-2 rounded-2xl p-4 lg:col-span-1 ${diff >= 0 ? 'bg-brand text-on-brand' : 'bg-expense-soft text-expense'}`}>
           <p className="text-sm font-semibold opacity-90">{diff >= 0 ? 'Sobra prevista' : 'Falta prevista'}</p>
           <p className="font-display text-2xl font-semibold break-words">{formatSignedCents(diff, diff >= 0 ? 'income' : 'expense')}</p>
         </div>

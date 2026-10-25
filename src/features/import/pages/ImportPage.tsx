@@ -135,7 +135,7 @@ export function ImportPage() {
       </Card>
 
       {loaded?.kind === 'ofx' && loaded.statement.isCreditCard !== (account.type === 'credit_card') && (
-        <p role="alert" className="rounded-2xl bg-[#FFF4DC] p-4 text-sm font-semibold text-[#8A5A00]">
+        <p role="alert" className="rounded-2xl bg-warn-soft p-4 text-sm font-semibold text-warn">
           {loaded.statement.isCreditCard
             ? 'Este arquivo parece ser de cartão de crédito, mas a conta escolhida não é um cartão.'
             : 'Este arquivo parece ser de conta corrente, mas a conta escolhida é um cartão.'}
@@ -378,7 +378,7 @@ function ReviewList({
           {alreadyImported > 0 && ` · ${alreadyImported} já importados antes (ignorados)`}
         </p>
         {fixes.length > 0 && (
-          <p className="rounded-xl bg-[#FFF4DC] p-3 text-sm font-semibold text-[#8A5A00]">
+          <p className="rounded-xl bg-warn-soft p-3 text-sm font-semibold text-warn">
             {fixes.length} {fixes.length === 1 ? 'parcela importada antes está' : 'parcelas importadas antes estão'} no mês da compra original e{' '}
             {fixes.length === 1 ? 'será movida' : 'serão movidas'} para a fatura certa.
           </p>
@@ -474,7 +474,7 @@ function ReviewItem({
             <p className="truncate font-semibold">{entry.description}</p>
             <p className="text-sm text-muted">
               {formatDayMonth(entry.date)}
-              {row.status === 'duplicate' && <span className="font-semibold text-[#8A5A00]"> · Possivelmente já lançado</span>}
+              {row.status === 'duplicate' && <span className="font-semibold text-warn"> · Possivelmente já lançado</span>}
             </p>
           </div>
           <p className={`shrink-0 font-display font-semibold ${out ? 'text-expense' : 'text-income'}`}>

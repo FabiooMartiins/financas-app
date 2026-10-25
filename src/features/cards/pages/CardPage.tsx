@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate, useParams, useSearchParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { Button, buttonClasses } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -10,25 +10,6 @@ import { InvoiceBadge, PayInvoiceForm, describeInvoiceDue, invoiceAmount, invoic
 import { isConfiguredCard, useCards, type CardWithInvoices } from '../hooks/useCards';
 import { ongoingInstallments, parseInstallment } from '../installments';
 import { describeCycle, type Invoice } from '../invoices';
-
-/** Aba Cartão: abre o primeiro cartão ativo. */
-export function CardsPage() {
-  const { data, isPending, error } = useCards();
-  if (isPending) return <LoadingState />;
-  if (error) return <ErrorState error={error} />;
-  if (data && data.length > 0) return <Navigate to={`/cartoes/${data[0].card.id}`} replace />;
-  return (
-    <>
-      <PageHeader title="Cartão" />
-      <EmptyState>
-        Nenhum cartão de crédito cadastrado.{' '}
-        <Link to="/contas/nova?tipo=cartao" className="font-semibold text-brand underline">
-          Cadastrar cartão
-        </Link>
-      </EmptyState>
-    </>
-  );
-}
 
 // Cartão de crédito: limite, fatura mês a mês com os lançamentos, parcelas futuras (RN-02, RF-21)
 export function CardPage() {
@@ -62,7 +43,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
           to={`/cartoes/${c.id}`}
           aria-current={c.id === card.id ? 'page' : undefined}
           className={`flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold ${
-            c.id === card.id ? 'border-ink bg-ink text-white' : 'border-line-strong bg-surface text-ink'
+            c.id === card.id ? 'border-brand bg-brand text-on-brand' : 'border-line-strong bg-surface text-ink'
           }`}
         >
           {c.name}
@@ -74,7 +55,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
   if (!invoices || !isConfiguredCard(card)) {
     return (
       <>
-        <PageHeader title={card.name} action={editLink} />
+        <PageHeader title={card.name} backTo="/cartoes" action={editLink} />
         {switcher}
         <EmptyState>
           Informe o dia de fechamento e o dia de vencimento do cartão para acompanhar as faturas.{' '}
@@ -107,11 +88,11 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
 
   return (
     <>
-      <PageHeader title={card.name} action={editLink} />
+      <PageHeader title={card.name} backTo="/cartoes" action={editLink} />
       {switcher}
 
       {/* Limite */}
-      <div className="flex flex-col gap-3 rounded-2xl bg-ink p-5 text-white">
+      <div className="flex flex-col gap-3 rounded-2xl bg-hero p-5 text-on-hero">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold opacity-80">{available !== null ? 'Limite disponível' : 'Total em aberto'}</p>
@@ -125,8 +106,8 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
         </div>
         {limit !== null ? (
           <>
-            <div className="h-2 rounded-full bg-white/20" role="meter" aria-label="Limite usado" aria-valuemin={0} aria-valuemax={limit} aria-valuenow={debt}>
-              <div className="h-2 rounded-full bg-white" style={{ width: `${usedShare * 100}%` }} />
+            <div className="h-2 rounded-full bg-on-hero/20" role="meter" aria-label="Limite usado" aria-valuemin={0} aria-valuemax={limit} aria-valuenow={debt}>
+              <div className="h-2 rounded-full bg-on-hero" style={{ width: `${usedShare * 100}%` }} />
             </div>
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div className="min-w-0">
@@ -155,7 +136,7 @@ function CardView({ entry, others }: { entry: CardWithInvoices; others: CardWith
             type="button"
             onClick={() => select(i.key)}
             className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl p-4 text-left text-sm font-semibold ${
-              i.status === 'overdue' ? 'bg-expense-soft text-expense' : 'bg-[#FFF4DC] text-[#8A5A00]'
+              i.status === 'overdue' ? 'bg-expense-soft text-expense' : 'bg-warn-soft text-warn'
             }`}
           >
             <span className="min-w-0">

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/Button';
 import { ConfirmButton } from '@/components/ui/ConfirmButton';
@@ -35,6 +35,8 @@ export function TransactionFormPage() {
 
 function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   const navigate = useNavigate();
+  // Atalhos: ?tipo=transfer&origem=<id>&destino=<id> (ex.: "Guardar" e "Resgatar" na tela de investimentos)
+  const [params] = useSearchParams();
   const { data: accounts, isPending: loadingAccounts } = useAccounts();
   const { data: categories } = useCategories();
   const create = useCreateTransaction();
@@ -65,19 +67,19 @@ function TransactionForm({ transaction }: { transaction?: TransactionRow }) {
   const fromBank = transaction?.source === 'bank';
   const active = accounts?.filter((a) => a.is_active || a.id === transaction?.account_id || a.id === transaction?.transfer_account_id) ?? [];
 
-  const [type, setType] = useState<TransactionType>(transaction?.type ?? 'expense');
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? (params.get('tipo') === 'transfer' ? 'transfer' : 'expense'));
   const [amount, setAmount] = useState(transaction ? centsToInput(transaction.amount_cents) : '');
   const [description, setDescription] = useState(transaction?.description ?? '');
   const [date, setDate] = useState(transaction?.occurred_on ?? today());
-  const [chosenAccount, setAccountId] = useState(transaction?.account_id ?? '');
-  const [chosenTarget, setTargetId] = useState(transaction?.transfer_account_id ?? '');
+  const [chosenAccount, setAccountId] = useState(transaction?.account_id ?? params.get('origem') ?? '');
+  const [chosenTarget, setTargetId] = useState(transaction?.transfer_account_id ?? params.get('destino') ?? '');
   const [categoryId, setCategoryId] = useState(transaction?.category_id ?? '');
   const [repeat, setRepeat] = useState<Repeat>('once');
   const [installments, setInstallments] = useState('2');
   const [amountError, setAmountError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const accountId = chosenAccount || active[0]?.id || '';
+  const accountId = chosenAccount || (chosenTarget ? active.find((a) => a.id !== chosenTarget)?.id : active[0]?.id) || '';
   const targetId = chosenTarget || active.find((a) => a.id !== accountId)?.id || '';
   const kindCategories = categories?.filter((c) => c.kind === type) ?? [];
   const cents = parseToCents(amount);

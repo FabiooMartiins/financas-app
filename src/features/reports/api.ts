@@ -25,6 +25,7 @@ export async function listMovements(from: string, to: string): Promise<Movement[
       .from('transactions')
       .select('id, type, amount_cents, occurred_on, category_id, account_id, description, external_id')
       .in('type', ['income', 'expense'])
+      .eq('nature', 'normal') // RN-10: sem rendimentos e ajustes de saldo
       .gte('occurred_on', from)
       .lte('occurred_on', to)
       // Ordem única (id desempata): sem ela a paginação repete ou pula linhas do mesmo dia
@@ -131,7 +132,7 @@ export async function exportTransactionsCsv(from: string, to: string): Promise<B
   const { data, error } = await supabase
     .from('transactions')
     .select(
-      'occurred_on, type, description, amount_cents, source, ' +
+      'occurred_on, type, nature, description, amount_cents, source, ' +
         'account:accounts!transactions_account_id_fkey(name), transfer_account:accounts!transactions_transfer_account_id_fkey(name), category:categories(name)',
     )
     .gte('occurred_on', from)
@@ -143,6 +144,7 @@ export async function exportTransactionsCsv(from: string, to: string): Promise<B
   const rows = (data as unknown as {
     occurred_on: string;
     type: keyof typeof typeLabel;
+    nature: 'normal' | 'adjustment' | 'yield';
     description: string;
     amount_cents: number;
     source: string;
@@ -151,7 +153,7 @@ export async function exportTransactionsCsv(from: string, to: string): Promise<B
     category: { name: string } | null;
   }[]).map((t) => [
     t.occurred_on.split('-').reverse().join('/'),
-    typeLabel[t.type],
+    t.nature === 'yield' ? 'Rendimento' : t.nature === 'adjustment' ? 'Ajuste de saldo' : typeLabel[t.type],
     t.description,
     (t.type === 'expense' ? -t.amount_cents / 100 : t.amount_cents / 100).toFixed(2).replace('.', ','),
     t.category?.name ?? '',

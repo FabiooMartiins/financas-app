@@ -18,7 +18,8 @@ Fase 2: app iOS nativo. Idioma da interface: português do Brasil.
 - Celular usa `BottomNav`; PC usa `Sidebar` (ambos em `components/layout`)
 - Respeitar áreas seguras do iPhone (`pt-safe`, `pb-safe`) e inputs com 16px
 - Botões e links reais (`<button>`, `<a>`), alvos de toque com pelo menos 44px
-- Cores: brand/receita `#0E6B58`, despesa `#B4410F`; fontes Sora (títulos) e Manrope (texto)
+- Cores: sempre pelos tokens de `global.css` (`bg-brand`, `text-on-brand`, `bg-hero`, `text-warn`…), nunca hex
+  fixo: o tema escuro (padrão) troca os valores em `:root[data-theme="dark"]`. Fontes Sora (títulos) e Manrope (texto)
 
 ## Segurança
 - Nunca colocar a chave `service_role` nem segredos do agregador no front-end
@@ -33,7 +34,10 @@ Principais regras de negócio:
 - RN-03: marcar conta mensal como paga gera uma transação; desmarcar remove
 - RN-04: conta não paga após o vencimento fica "vencida"
 - RN-05: transações importadas do banco: só categoria e descrição são editáveis
+- RN-07: saldo total = contas bancárias e carteira ativas com `include_in_total`; cartão e investimentos ficam de fora
 - RN-08: período padrão dos relatórios é o mês civil
+- RN-09: lucro do investimento = saldo atual − (saldo inicial + aportes − resgates) — `features/investments/returns.ts`
+- RN-10: `transactions.nature` 'yield' (rendimento) e 'adjustment' (ajuste de saldo) não entram em receitas/despesas
 
 ## Situação (30/09/2026)
 Feito: auth (cadastro, login, recuperar/alterar senha), contas, categorias, transações
@@ -45,7 +49,14 @@ Cartão de crédito: `accounts.closing_day/due_day/credit_limit_cents`; faturas 
 cliente em `features/cards/invoices.ts` (compra a partir do fechamento vai para a próxima;
 pagamentos = transferências para o cartão, abatidos da fatura mais antiga).
 
+## Ajustes de 25/10/2026 (migração `20261025000000_ajustes_outubro.sql`)
+Contas em três grupos (`accountGroup`: bank, card, investment; novo tipo `investment` = caixinha).
+Telas novas: Cartões (`/cartoes`, no menu), Investimentos (`/investimentos`), Histórico (`/historico`),
+Perfil (`/perfil`, tabela `profiles`). Logos e fotos em buckets privados `logos`/`avatars` (`lib/storage.ts`,
+URLs assinadas). Ajuste de saldo em Editar conta (`AdjustBalanceForm`). Tema em `lib/theme.ts`.
+
 ## Próximos passos
 1. Integração Open Finance (Edge Function `openfinance-sync`) — falta escolher o agregador
 2. Publicar (Cloudflare Pages) e ajustar Site URL / Redirect URLs no Supabase Auth
 3. Notificações push de vencimento (hoje o lembrete RF-20 aparece dentro do app)
+4. Estimar o rendimento da caixinha pelo CDI do dia (hoje o rendimento entra ao atualizar o saldo)

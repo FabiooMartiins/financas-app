@@ -15,7 +15,7 @@ export function BottomNav() {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `flex min-h-11 flex-col items-center gap-1 py-2 text-[11px] ${
+                `flex min-h-11 flex-col items-center gap-1 py-2 text-[10px] leading-tight ${
                   isActive ? 'font-bold text-brand' : 'font-semibold text-muted'
                 }`
               }

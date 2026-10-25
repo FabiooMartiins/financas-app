@@ -13,7 +13,7 @@ import { describeDue, type BillOccurrence, type BillStatus } from '../schedule';
 const badge: Record<BillStatus, string> = {
   paid: 'bg-brand/10 text-brand',
   overdue: 'bg-expense-soft text-expense',
-  'due-soon': 'bg-[#FFF4DC] text-[#8A5A00]',
+  'due-soon': 'bg-warn-soft text-warn',
   upcoming: 'bg-ground text-muted',
 };
 
@@ -40,7 +40,7 @@ export function BillOccurrenceItem({ occurrence: o, showMonth }: { occurrence: B
         >
           <span
             className={`flex size-6 items-center justify-center rounded-full border-2 ${
-              paid ? 'border-brand bg-brand text-white' : o.status === 'overdue' ? 'border-expense' : 'border-line-strong'
+              paid ? 'border-brand bg-brand text-on-brand' : o.status === 'overdue' ? 'border-expense' : 'border-line-strong'
             }`}
           >
             {paid && (

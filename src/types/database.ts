@@ -7,13 +7,13 @@ export type Database = {
           Tables: {
             "accounts": {
                   Row: {
-                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"due_days_after_closing": number | null,"external_id": string | null,"id": string,"is_active": boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string
+                    "balance_cents": number,"closing_day": number | null,"connection_id": string | null,"created_at": string,"credit_limit_cents": number | null,"due_day": number | null,"due_days_after_closing": number | null,"external_id": string | null,"id": string,"include_in_total": boolean,"is_active": boolean,"logo_path": string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id": string,"yield_note": string | null
                   }
                   Insert: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name": string,"type": Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
                   }
                   Update: {
-                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"is_active"?: boolean,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string
+                    "balance_cents"?: number,"closing_day"?: number | null,"connection_id"?: string | null,"created_at"?: string,"credit_limit_cents"?: number | null,"due_day"?: number | null,"due_days_after_closing"?: number | null,"external_id"?: string | null,"id"?: string,"include_in_total"?: boolean,"is_active"?: boolean,"logo_path"?: string | null,"name"?: string,"type"?: Database["public"]['Enums']["account_type"],"user_id"?: string,"yield_note"?: string | null
                   }
                   Relationships: [
                     {
@@ -112,15 +112,28 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"transactions": {
+                },"profiles": {
                   Row: {
-                    "account_id": string,"amount_cents": number,"category_id": string | null,"created_at": string,"description": string,"external_id": string | null,"id": string,"occurred_on": string,"source": Database["public"]['Enums']["transaction_source"],"transfer_account_id": string | null,"type": Database["public"]['Enums']["transaction_type"],"user_id": string
+                    "avatar_path": string | null,"birth_date": string | null,"financial_goal": string | null,"full_name": string | null,"monthly_income_cents": number | null,"nickname": string | null,"occupation": string | null,"phone": string | null,"theme": string,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "account_id": string,"amount_cents": number,"category_id"?: string | null,"created_at"?: string,"description": string,"external_id"?: string | null,"id"?: string,"occurred_on": string,"source"?: Database["public"]['Enums']["transaction_source"],"transfer_account_id"?: string | null,"type": Database["public"]['Enums']["transaction_type"],"user_id"?: string
+                    "avatar_path"?: string | null,"birth_date"?: string | null,"financial_goal"?: string | null,"full_name"?: string | null,"monthly_income_cents"?: number | null,"nickname"?: string | null,"occupation"?: string | null,"phone"?: string | null,"theme"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Update: {
-                    "account_id"?: string,"amount_cents"?: number,"category_id"?: string | null,"created_at"?: string,"description"?: string,"external_id"?: string | null,"id"?: string,"occurred_on"?: string,"source"?: Database["public"]['Enums']["transaction_source"],"transfer_account_id"?: string | null,"type"?: Database["public"]['Enums']["transaction_type"],"user_id"?: string
+                    "avatar_path"?: string | null,"birth_date"?: string | null,"financial_goal"?: string | null,"full_name"?: string | null,"monthly_income_cents"?: number | null,"nickname"?: string | null,"occupation"?: string | null,"phone"?: string | null,"theme"?: string,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"transactions": {
+                  Row: {
+                    "account_id": string,"amount_cents": number,"category_id": string | null,"created_at": string,"description": string,"external_id": string | null,"id": string,"nature": Database["public"]['Enums']["transaction_nature"],"occurred_on": string,"source": Database["public"]['Enums']["transaction_source"],"transfer_account_id": string | null,"type": Database["public"]['Enums']["transaction_type"],"user_id": string
+                  }
+                  Insert: {
+                    "account_id": string,"amount_cents": number,"category_id"?: string | null,"created_at"?: string,"description": string,"external_id"?: string | null,"id"?: string,"nature"?: Database["public"]['Enums']["transaction_nature"],"occurred_on": string,"source"?: Database["public"]['Enums']["transaction_source"],"transfer_account_id"?: string | null,"type": Database["public"]['Enums']["transaction_type"],"user_id"?: string
+                  }
+                  Update: {
+                    "account_id"?: string,"amount_cents"?: number,"category_id"?: string | null,"created_at"?: string,"description"?: string,"external_id"?: string | null,"id"?: string,"nature"?: Database["public"]['Enums']["transaction_nature"],"occurred_on"?: string,"source"?: Database["public"]['Enums']["transaction_source"],"transfer_account_id"?: string | null,"type"?: Database["public"]['Enums']["transaction_type"],"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -182,7 +195,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "account_type": "checking"|"savings"|"credit_card"|"wallet","bill_frequency": "monthly"|"yearly"|"once","category_kind": "income"|"expense","transaction_source": "manual"|"bank","transaction_type": "income"|"expense"|"transfer"
+            "account_type": "checking"|"savings"|"credit_card"|"wallet"|"investment","bill_frequency": "monthly"|"yearly"|"once","category_kind": "income"|"expense","transaction_source": "manual"|"bank","transaction_nature": "normal"|"adjustment"|"yield","transaction_type": "income"|"expense"|"transfer"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -298,7 +311,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "account_type": ["checking", "savings", "credit_card", "wallet"],"bill_frequency": ["monthly", "yearly", "once"],"category_kind": ["income", "expense"],"transaction_source": ["manual", "bank"],"transaction_type": ["income", "expense", "transfer"]
+            "account_type": ["checking", "savings", "credit_card", "wallet", "investment"],"bill_frequency": ["monthly", "yearly", "once"],"category_kind": ["income", "expense"],"transaction_source": ["manual", "bank"],"transaction_nature": ["normal", "adjustment", "yield"],"transaction_type": ["income", "expense", "transfer"]
           }
         }
 } as const
