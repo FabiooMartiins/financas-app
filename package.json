@@ -9,7 +9,7 @@
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
     "db:types": "supabase gen types typescript --local > src/types/database.ts",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name financas-app --branch main"
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name financas-app --branch main"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
